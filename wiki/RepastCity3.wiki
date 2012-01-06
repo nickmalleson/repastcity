@@ -15,7 +15,7 @@ The code is released under the 'GNU GPL v3'_ licence so you're welcome to use th
 
 == Getting the Program and Running It ==
 
-The program is available as a single compressed file which contains the entire Eclipse project. A link is available on the [http://code.google.com/p/repastcity/ project website]. Download the file and extract it somewhere (the location is not important).
+The program is available as a single compressed [http://repastcity.googlecode.com/files/repastcity3.zip file] which contains the entire Eclipse project. Download the file and extract it somewhere (the location is not important).
 
 To run the program you need to download [http://repast.sourceforge.net/download.html Repast Simphony version 2.0] (it comes bundled with the Eclipse development environment) and then follow these instructions:
 
