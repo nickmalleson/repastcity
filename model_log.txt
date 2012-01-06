@@ -200,3 +200,5 @@ Jan 6, 2012 3:02:27 PM repastcity3.main.ContextManager printTicks
 INFO: Iterations: 24001.0. Speed: 23.769sec/ticks.
 Jan 6, 2012 3:02:49 PM repastcity3.main.ContextManager printTicks
 INFO: Iterations: 25001.0. Speed: 22.127sec/ticks.
+Jan 6, 2012 3:03:12 PM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 26001.0. Speed: 23.036sec/ticks.
