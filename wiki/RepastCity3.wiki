@@ -28,4 +28,4 @@ To run the program you need to download [http://repast.sourceforge.net/download.
 
 There is a picture below which shows what the program should look like.
 
-http://code.google.com/p/repastcity/source/browse/wiki/images/gui.jpg
+http://repastcity.googlecode.com/svn/wiki/images/gui.jpg
