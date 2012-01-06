@@ -1,0 +1,252 @@
+<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
+<qgis projectname="" version="1.0.0-Kore-preview1" >
+    <title></title>
+    <mapcanvas>
+        <units>meters</units>
+        <extent>
+            <xmin>431557.263855</xmin>
+            <ymin>437029.287053</ymin>
+            <xmax>432078.918977</xmax>
+            <ymax>437486.672550</ymax>
+        </extent>
+        <projections>0</projections>
+        <destinationsrs>
+            <spatialrefsys>
+                <proj4>+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=WGS84 +units=m +no_defs </proj4>
+                <srsid>2330</srsid>
+                <srid>27700</srid>
+                <epsg>27700</epsg>
+                <description>OSGB 1936 / British National Grid</description>
+                <projectionacronym>tmerc</projectionacronym>
+                <ellipsoidacronym>airy</ellipsoidacronym>
+                <geographicflag>false</geographicflag>
+            </spatialrefsys>
+        </destinationsrs>
+    </mapcanvas>
+    <legend>
+        <legendlayer open="true" checked="Qt::Checked" name="stations" >
+            <filegroup open="false" hidden="true" >
+                <legendlayerfile isInOverview="0" layerid="stations20081117150002676" visible="1" />
+            </filegroup>
+        </legendlayer>
+        <legendlayer open="true" checked="Qt::Checked" name="roads" >
+            <filegroup open="false" hidden="true" >
+                <legendlayerfile isInOverview="0" layerid="roads20081117150002848" visible="1" />
+            </filegroup>
+        </legendlayer>
+        <legendlayer open="true" checked="Qt::Checked" name="buildings" >
+            <filegroup open="false" hidden="true" >
+                <legendlayerfile isInOverview="0" layerid="buildings20081117150002879" visible="1" />
+            </filegroup>
+        </legendlayer>
+    </legend>
+    <Composer>
+        <Composition paperWidth="297" paperHeight="210" />
+    </Composer>
+    <projectlayers layercount="3" >
+        <maplayer minimumScale="1" maximumScale="1" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" >
+            <id>buildings20081117150002879</id>
+            <datasource>E:\My Dropbox\phd\model\eclipse_workspace\BurgdSim\data\gis_data\shape\buildings.shp</datasource>
+            <layername>buildings</layername>
+            <srs>
+                <spatialrefsys>
+                    <proj4>+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs </proj4>
+                    <srsid>3344</srsid>
+                    <srid>4326</srid>
+                    <epsg>4326</epsg>
+                    <description>WGS 84</description>
+                    <projectionacronym>longlat</projectionacronym>
+                    <ellipsoidacronym>WGS84</ellipsoidacronym>
+                    <geographicflag>false</geographicflag>
+                </spatialrefsys>
+            </srs>
+            <transparencyLevelInt>255</transparencyLevelInt>
+            <provider>ogr</provider>
+            <encoding>System</encoding>
+            <edittypes>
+                <edittype type="0" name="ID" />
+                <edittype type="0" name="TYPE" />
+                <edittype type="0" name="acc" />
+                <edittype type="0" name="sec" />
+                <edittype type="0" name="vis" />
+            </edittypes>
+            <displayfield>TYPE</displayfield>
+            <label>1</label>
+            <attributeactions/>
+            <singlesymbol>
+                <symbol>
+                    <lowervalue></lowervalue>
+                    <uppervalue></uppervalue>
+                    <label></label>
+                    <pointsymbol>hard:circle</pointsymbol>
+                    <pointsize>2</pointsize>
+                    <rotationclassificationfield>-1</rotationclassificationfield>
+                    <scaleclassificationfield>-1</scaleclassificationfield>
+                    <outlinecolor red="0" blue="0" green="0" />
+                    <outlinestyle>SolidLine</outlinestyle>
+                    <outlinewidth>0.4</outlinewidth>
+                    <fillcolor red="12" blue="174" green="174" />
+                    <fillpattern>SolidPattern</fillpattern>
+                    <texturepath></texturepath>
+                </symbol>
+            </singlesymbol>
+            <labelfield>ID</labelfield>
+            <labelattributes>
+                <label field="1" text="Label" />
+                <family field="" name="MS Shell Dlg 2" />
+                <size field="" units="pt" value="9" />
+                <bold field="" on="0" />
+                <italic field="" on="0" />
+                <underline field="" on="0" />
+                <color field="" red="0" blue="0" green="0" />
+                <x field="" />
+                <y field="" />
+                <offset x="0" y="0" yfield="-1" xfield="-1" units="pt" />
+                <angle field="" value="0" />
+                <alignment field="-1" value="center" />
+                <buffercolor field="" red="0" blue="0" green="0" />
+                <buffersize field="" units="pt" value="1" />
+                <bufferenabled field="" on="" />
+                <multilineenabled field="" on="" />
+            </labelattributes>
+        </maplayer>
+        <maplayer minimumScale="0" maximumScale="0" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" >
+            <id>roads20081117150002848</id>
+            <datasource>E:\My Dropbox\phd\model\eclipse_workspace\BurgdSim\data\gis_data\shape\roads.shp</datasource>
+            <layername>roads</layername>
+            <srs>
+                <spatialrefsys>
+                    <proj4>+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs </proj4>
+                    <srsid>3344</srsid>
+                    <srid>4326</srid>
+                    <epsg>4326</epsg>
+                    <description>WGS 84</description>
+                    <projectionacronym>longlat</projectionacronym>
+                    <ellipsoidacronym>WGS84</ellipsoidacronym>
+                    <geographicflag>false</geographicflag>
+                </spatialrefsys>
+            </srs>
+            <transparencyLevelInt>255</transparencyLevelInt>
+            <provider>ogr</provider>
+            <encoding>System</encoding>
+            <displayfield>ID</displayfield>
+            <label>0</label>
+            <attributeactions/>
+            <singlesymbol>
+                <symbol>
+                    <lowervalue></lowervalue>
+                    <uppervalue></uppervalue>
+                    <label></label>
+                    <pointsymbol>hard:circle</pointsymbol>
+                    <pointsize>3</pointsize>
+                    <rotationclassificationfield>-1</rotationclassificationfield>
+                    <scaleclassificationfield>-1</scaleclassificationfield>
+                    <outlinecolor red="117" blue="56" green="136" />
+                    <outlinestyle>SolidLine</outlinestyle>
+                    <outlinewidth>0.4</outlinewidth>
+                    <fillcolor red="0" blue="0" green="0" />
+                    <fillpattern>NoBrush</fillpattern>
+                    <texturepath></texturepath>
+                </symbol>
+            </singlesymbol>
+            <labelattributes>
+                <label field="" text="Label" />
+                <family field="" name="Lucida Grande" />
+                <size field="" units="pt" value="12" />
+                <bold field="" on="0" />
+                <italic field="" on="0" />
+                <underline field="" on="0" />
+                <color field="" red="0" blue="0" green="0" />
+                <x field="" />
+                <y field="" />
+                <offset x="0" y="0" yfield="-1" xfield="-1" units="pt" />
+                <angle field="" value="0" />
+                <alignment field="-1" value="center" />
+                <buffercolor field="" red="255" blue="255" green="255" />
+                <buffersize field="" units="pt" value="1" />
+                <bufferenabled field="" on="" />
+                <multilineenabled field="" on="" />
+            </labelattributes>
+        </maplayer>
+        <maplayer minimumScale="0" maximumScale="0" geometry="Point" type="vector" hasScaleBasedVisibilityFlag="0" >
+            <id>stations20081117150002676</id>
+            <datasource>E:\My Dropbox\phd\model\eclipse_workspace\BurgdSim\data\gis_data\shape\stations.shp</datasource>
+            <layername>stations</layername>
+            <srs>
+                <spatialrefsys>
+                    <proj4>+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs </proj4>
+                    <srsid>3344</srsid>
+                    <srid>4326</srid>
+                    <epsg>4326</epsg>
+                    <description>WGS 84</description>
+                    <projectionacronym>longlat</projectionacronym>
+                    <ellipsoidacronym>WGS84</ellipsoidacronym>
+                    <geographicflag>false</geographicflag>
+                </spatialrefsys>
+            </srs>
+            <transparencyLevelInt>255</transparencyLevelInt>
+            <provider>ogr</provider>
+            <encoding>System</encoding>
+            <displayfield>TYPE</displayfield>
+            <label>0</label>
+            <attributeactions/>
+            <singlesymbol>
+                <symbol>
+                    <lowervalue></lowervalue>
+                    <uppervalue></uppervalue>
+                    <label></label>
+                    <pointsymbol>hard:circle</pointsymbol>
+                    <pointsize>6</pointsize>
+                    <rotationclassificationfield>-1</rotationclassificationfield>
+                    <scaleclassificationfield>-1</scaleclassificationfield>
+                    <outlinecolor red="0" blue="0" green="0" />
+                    <outlinestyle>SolidLine</outlinestyle>
+                    <outlinewidth>0.4</outlinewidth>
+                    <fillcolor red="1" blue="193" green="34" />
+                    <fillpattern>SolidPattern</fillpattern>
+                    <texturepath></texturepath>
+                </symbol>
+            </singlesymbol>
+            <labelattributes>
+                <label field="" text="Label" />
+                <family field="" name="Lucida Grande" />
+                <size field="" units="pt" value="12" />
+                <bold field="" on="0" />
+                <italic field="" on="0" />
+                <underline field="" on="0" />
+                <color field="" red="0" blue="0" green="0" />
+                <x field="" />
+                <y field="" />
+                <offset x="0" y="0" yfield="-1" xfield="-1" units="pt" />
+                <angle field="" value="0" />
+                <alignment field="-1" value="center" />
+                <buffercolor field="" red="255" blue="255" green="255" />
+                <buffersize field="" units="pt" value="1" />
+                <bufferenabled field="" on="" />
+                <multilineenabled field="" on="" />
+            </labelattributes>
+        </maplayer>
+    </projectlayers>
+    <properties>
+        <SpatialRefSys>
+            <ProjectCRSProj4String type="QString" >+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +datum=OSGB36 +units=m +no_defs</ProjectCRSProj4String>
+            <ProjectCRSID type="int" >2330</ProjectCRSID>
+        </SpatialRefSys>
+        <Gui>
+            <SelectionColorBluePart type="int" >0</SelectionColorBluePart>
+            <CanvasColorGreenPart type="int" >255</CanvasColorGreenPart>
+            <CanvasColorRedPart type="int" >255</CanvasColorRedPart>
+            <SelectionColorRedPart type="int" >255</SelectionColorRedPart>
+            <SelectionColorGreenPart type="int" >255</SelectionColorGreenPart>
+            <CanvasColorBluePart type="int" >255</CanvasColorBluePart>
+        </Gui>
+        <Digitizing>
+            <AvoidPolygonIntersections type="int" >0</AvoidPolygonIntersections>
+            <TopologicalEditing type="int" >0</TopologicalEditing>
+        </Digitizing>
+        <PositionPrecision>
+            <DecimalPlaces type="int" >2</DecimalPlaces>
+            <Automatic type="bool" >true</Automatic>
+        </PositionPrecision>
+    </properties>
+</qgis>

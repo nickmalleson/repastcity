@@ -1,0 +1,13 @@
+<context id="maincontext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://repast.org/scenario/context">
+	<context id="AgentContext">
+		<projection type="geography" id="AgentGeography"></projection></context><context id="BuildingContext">
+		<projection type="geography" id="BuildingGeography"></projection></context>
+	<context id="RoadContext">
+		<projection type="geography" id="RoadGeography"></projection></context>
+	<context id="JunctionContext">
+		<projection type="geography" id="JunctionGeography"></projection>
+		<projection type="network" id="RoadNetwork"></projection></context>
+	
+	<projection type="geography" id="MainGeography"></projection>
+
+</context>
