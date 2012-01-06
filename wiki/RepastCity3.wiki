@@ -1,4 +1,5 @@
 #summary Introduction to RepastCity3.
+#labels Featured
 
 = RepastCity - A demo virtual city (version 3) =
 
