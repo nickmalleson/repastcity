@@ -43,6 +43,7 @@ By default, RepastCity creates agents of the type  `repastcity3.agent.DefaultAge
 
 By default, each agent chooses a building at random, travels there, and then travels home again. The following code illustrates how this can be accomplished:
 
+<code language="xml">
 {{{
 @Override
 public void step() throws Exception {
@@ -71,6 +72,7 @@ public void step() throws Exception {
         }
 } // step()
 }}}
+</code>
 
 == Method 2 - Implement `IAgent` ==
 
@@ -87,4 +89,3 @@ In the `Agent Definition`, replace the text `point:people.shp$repastcity3.agent.
 
 
 Note that if a new agent type is used this new agent type must be added to the display or it will not be shown when the model is running. The existing display only shows objects of type `DefaultAgent`.
-
