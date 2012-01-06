@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
-import repastcity3.exceptions.DuplicateRoadException;
+import repastcity3.exceptions.DuplicateIdentifierException;
 import repastcity3.exceptions.NoIdentifierException;
 import repastcity3.main.GlobalVars;
 
@@ -36,7 +36,7 @@ import repastcity3.main.GlobalVars;
  * 
  * @author Nick Malleson
  */
-public class Road implements FixedGeography {
+public class Road implements FixedGeography, Identified {
 
 	private static Logger LOGGER = Logger.getLogger(Road.class.getName());
 
@@ -74,7 +74,7 @@ public class Road implements FixedGeography {
 		try {
 			Road.nullRoad.setIdentifier("NULLROAD");
 			Road.nullRoad.setCoords(new Coordinate());
-		} catch (DuplicateRoadException e) { // This should never happen
+		} catch (DuplicateIdentifierException e) { // This should never happen
 			LOGGER.log(Level.SEVERE, "", e);
 		}
 
@@ -171,13 +171,13 @@ public class Road implements FixedGeography {
 	 * Set the road's identifier. Will check that it is unique.
 	 * 
 	 * @param identifier
-	 * @throws DuplicateRoadException
+	 * @throws DuplicateIdentifierException
 	 *             If a road with the given identifier has already been created
 	 */
-	public void setIdentifier(String identifier) throws DuplicateRoadException {
+	public void setIdentifier(String identifier) throws DuplicateIdentifierException {
 		// Check the ID is unique
 		if (Road.idMap.containsKey(identifier)) {
-			throw new DuplicateRoadException("A road with identifier '" + identifier + "' has already "
+			throw new DuplicateIdentifierException("A road with identifier '" + identifier + "' has already "
 					+ "been created - cannot have two roads with the same unique ID.");
 		}
 		this.identifier = identifier;
@@ -250,8 +250,8 @@ public class Road implements FixedGeography {
 	public boolean equals(Object obj) {
 		if (!(obj instanceof Road))
 			return false;
-		Road b = (Road) obj;
-		return this.identifier == b.identifier;
+		Road r = (Road) obj;
+		return this.identifier.equals(r.identifier);
 	}
 
 	/**
@@ -259,6 +259,10 @@ public class Road implements FixedGeography {
 	 */
 	@Override
 	public int hashCode() {
+		if (this.identifier==null) {
+			LOGGER.severe("hashCode called but this object's identifier has not been set. It is likely that you're " +
+					"reading a shapefile that doesn't have a string column called 'identifier'");
+		}
 		return this.identifier.hashCode();
 	}
 }

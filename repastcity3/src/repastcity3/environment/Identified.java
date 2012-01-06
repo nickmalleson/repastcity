@@ -16,14 +16,21 @@ You should have received a copy of the GNU General Public License
 along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package repastcity3.exceptions;
+package repastcity3.environment;
 
-public class DuplicateRoadException extends Exception {
+import repastcity3.exceptions.DuplicateIdentifierException;
+import repastcity3.exceptions.NoIdentifierException;
 
-	private static final long serialVersionUID = 1L;
+/**
+ * Interface for classes that can be identified. Useful for environment objects that must read an identifier
+ * value from input data.
+ * @author Nick Malleson
+ *
+ */
+public interface Identified {
+	
+	String getIdentifier() throws NoIdentifierException;
 
-	public DuplicateRoadException(String message) {
-		super(message);
-	}
+	void setIdentifier(String id) throws DuplicateIdentifierException;
 
 }
