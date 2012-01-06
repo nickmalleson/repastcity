@@ -43,7 +43,7 @@ By default, RepastCity creates agents of the type  `repastcity3.agent.DefaultAge
 
 By default, each agent chooses a building at random, travels there, and then travels home again. The following code illustrates how this can be accomplished:
 
-<code language="xml">
+<code language="java">
 {{{
 @Override
 public void step() throws Exception {
