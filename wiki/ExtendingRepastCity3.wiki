@@ -1,6 +1,6 @@
 = Extending RepastCity =
 
-This page provides instructions describing how the model can be extended to suit individual applications.
+#summary Instructions describing how the model can be extended to suit individual applications.
 
 = Using New Input Data =
 
