@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package repastcity3.main;
 
@@ -23,11 +23,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,12 +47,14 @@ import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.GeographyParameters;
 import repast.simphony.space.gis.SimpleAdder;
 import repast.simphony.space.graph.Network;
+import repast.simphony.space.graph.RepastEdge;
 import repastcity3.agent.AgentFactory;
 import repastcity3.agent.IAgent;
 import repastcity3.agent.ThreadedAgentScheduler;
 import repastcity3.environment.Building;
 import repastcity3.environment.GISFunctions;
 import repastcity3.environment.Junction;
+import repastcity3.environment.NetworkEdge;
 import repastcity3.environment.NetworkEdgeCreator;
 import repastcity3.environment.Road;
 import repastcity3.environment.SpatialIndexManager;
@@ -166,8 +167,7 @@ public class ContextManager implements ContextBuilder<Object> {
 			roadNetwork = builder.buildNetwork();
 			GISFunctions.buildGISRoadNetwork(roadProjection, junctionContext, junctionGeography, roadNetwork);
 
-			// Add the junctions to a spatial index (couldn't do this until the
-			// road network had been created).
+			// Add the junctions to a spatial index (couldn't do this until the road network had been created).
 			SpatialIndexManager.createIndex(junctionGeography, Junction.class);
 
 			testEnvironment();
@@ -219,14 +219,6 @@ public class ContextManager implements ContextBuilder<Object> {
 		return mainContext;
 	}
 
-	private static <T> List<T> toList(Iterable i) {
-		List<T> l = new ArrayList<T>();
-		Iterator<T> it = i.iterator();
-		while (it.hasNext()) {
-			l.add(it.next());
-		}
-		return l;
-	}
 
 	private void createSchedule() {
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
@@ -272,8 +264,12 @@ public class ContextManager implements ContextBuilder<Object> {
 
 	}
 
+	private static long speedTimer = -1; // For recording time per N iterations 
 	public void printTicks() {
-		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount());
+		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+
+				". Speed: "+((double)(System.currentTimeMillis()-ContextManager.speedTimer)/1000.0)+
+				"sec/ticks.");
+		ContextManager.speedTimer = System.currentTimeMillis();
 	}
 
 	/**
@@ -369,6 +365,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	 * 
 	 * @throws NoIdentifierException
 	 */
+	@SuppressWarnings("unchecked")
 	private void testEnvironment() throws EnvironmentError, NoIdentifierException {
 
 		LOGGER.log(Level.FINE, "Testing the environment");
@@ -390,9 +387,41 @@ public class ContextManager implements ContextBuilder<Object> {
 
 		// 2. Check that the number of roads matches the number of edges
 		if (sizeOfIterable(rc.getObjects(Road.class)) != sizeOfIterable(rn.getEdges())) {
-			throw new EnvironmentError("There should be equal numbers of roads in the road "
-					+ "context and edges in the road network. But there are "
-					+ sizeOfIterable(rc.getObjects(Road.class)) + " and " + sizeOfIterable(rn.getEdges()));
+			StringBuilder errormsg = new StringBuilder();
+			errormsg.append("There should be equal numbers of roads in the road context and edges in the "
+					+ "road network. But there are " + sizeOfIterable(rc.getObjects(Road.class)) + "roads and "
+					+ sizeOfIterable(rn.getEdges()) + " edges. ");
+
+			// If there are more edges than roads then something is pretty weird.
+			if (sizeOfIterable(rc.getObjects(Road.class)) < sizeOfIterable(rn.getEdges())) {
+				errormsg.append("There are more edges than roads, no idea how this could happen.");
+				throw new EnvironmentError(errormsg.toString());
+			} else { // Fewer edges than roads, try to work out which roads do not have associated edges.
+				/*
+				 * This can be caused when two roads connect the same two junctions and can be fixed by splitting one of
+				 * the two roads so that no two roads will have the same source/destination junctions ("e.g. see here
+				 * http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=Splitting_line_features), or by
+				 * deleting them. The logger should print a list of all roads that don't have matching edges below.
+				 */
+				HashSet<Road> roads = new HashSet<Road>();
+				for (Road r : rc.getObjects(Road.class)) {
+					roads.add(r);
+				}
+				for (RepastEdge<Junction> re : rn.getEdges()) {
+					NetworkEdge<Junction> e = (NetworkEdge<Junction>) re;
+					roads.remove(e.getRoad());
+				}
+				// Log this info (also print the list of roads in a format that is good for ArcGIS searches.
+				String er = errormsg.toString() + "The " + roads.size()
+						+ " roads that do not have associated edges are: " + roads.toString()
+						+ "\nHere is a list of roads in a format that copied into AcrGIS for searching:\n";
+				for (Road r : roads) {
+					er += ("\"identifier\"= '" + r.getIdentifier() + "' Or ");
+				}
+				LOGGER.log(Level.SEVERE, er);
+				throw new EnvironmentError(errormsg.append("See previous log messages for debugging info.").toString());
+			}
+
 		}
 
 		// 3. Check that the number of junctions matches the number of nodes
@@ -421,9 +450,9 @@ public class ContextManager implements ContextBuilder<Object> {
 
 	}
 
-	public static int sizeOfIterable(Iterable i) {
+	public static int sizeOfIterable(Iterable<?> i) {
 		int size = 0;
-		Iterator<Object> it = i.iterator();
+		Iterator<?> it = i.iterator();
 		while (it.hasNext()) {
 			size++;
 			it.next();

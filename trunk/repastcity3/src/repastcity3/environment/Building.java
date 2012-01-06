@@ -18,14 +18,17 @@ package repastcity3.environment;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
 import repastcity3.agent.IAgent;
 import repastcity3.exceptions.NoIdentifierException;
 
-public class Building implements FixedGeography {
+public class Building implements FixedGeography, Identified {
 
+	private static Logger LOGGER = Logger.getLogger(Building.class.getName());
+	
 	/** A list of agents who live here */
 	private List<IAgent> agents;
 
@@ -92,10 +95,15 @@ public class Building implements FixedGeography {
 	}
 
 	/**
-	 * Return this buildings unique id number.
+	 * Returns the hash code of this <code>Building</code>'s identifier string. 
 	 */
 	@Override
 	public int hashCode() {
+		if (this.identifier==null) {
+			LOGGER.severe("hashCode called but this object's identifier has not been set. It is likely that you're " +
+					"reading a shapefile that doesn't have a string column called 'identifier'");
+		}
+
 		return this.identifier.hashCode();
 	}
 

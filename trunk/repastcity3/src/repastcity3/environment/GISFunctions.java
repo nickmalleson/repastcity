@@ -34,6 +34,9 @@ import repast.simphony.context.Context;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.ShapefileLoader;
 import repast.simphony.space.graph.Network;
+import repast.simphony.space.graph.RepastEdge;
+import repastcity3.exceptions.NoIdentifierException;
+import repastcity3.main.ContextManager;
 
 /**
  * Class with useful GIS functions for configuring the GIS model environment.
@@ -113,23 +116,17 @@ public class GISFunctions {
 			// Set whether or not the edge represents a major road (gives extra benefit to car drivers).
 			if (road.isMajorRoad())
 				edge.setMajorRoad(true);
-			// // Store the road's TOID in a dictionary (one with edges as keys, one with id's as keys)
-			// try {
-			// // edgeIDs_KeyEdge.put(edge, (String) road.getIdentifier());
-			// // edgeIDs_KeyID.put((String) road.getIdentifier(), edge);
-			// edges_roads.put(edge, road);
-			// roads_edges.put(road, edge);
-			// } catch (Exception e) {
-			// Outputter.errorln("EnvironmentFactory: buildGISRoadNetwork error, here's the message:\n"+e.getMessage());
-			// }
+
 			// Tell the Road and the Edge about each other
 			road.setEdge(edge);
 			edge.setRoad(road);
+
+			// Add the edge to the network
 			if (!roadNetwork.containsEdge(edge)) {
 				roadNetwork.addEdge(edge);
 			} else {
 				LOGGER.severe("CityContext: buildRoadNetwork: for some reason this edge that has just been created "
-						+ "already exists in the RoadNetwork!");
+						+ "already exists in the RoadNetwork.");
 			}
 
 		} // for road:
