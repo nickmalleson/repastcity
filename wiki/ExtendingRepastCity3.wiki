@@ -31,6 +31,7 @@ In the `Agent Definition`, replace the text `point:people.shp$repastcity3.agent.
   # Press the 'save' icon to remember the change (optional).
   # Run the model.
 
+http://repastcity.googlecode.com/svn/wiki/images/agent_definition_gui.png
 
 For more information about the different ways to create agents, see the Java documentation for the `repastcity3.agent.AgentFactory` class.
 

@@ -8,6 +8,8 @@ In Repast Simphony models, agents are organised into collections called *Context
 
 The figure below illustrates the organisation of the RepastCity model. Each context has an associated GIS projection to store the spatial locations of the objects.
 
+http://repastcity.googlecode.com/svn/wiki/images/contexts_projections.png
+
 The *JunctionContext* is at the central means of routing agents. A Junction object is defined as the point at which two roads cross (e.g. an intersection). Therefore the *JunctionGeogaraphy* GIS projection is used to hold all the road intersections, and *RoadNetwork* is a network projection that contains the links between different junctions. Hence agents use the network to work out how to move from one place to another along the road network.
 
 A fuller description of the routing algorithm itself is available on the [http://crimesim.blogspot.com/2008/05/using-repast-to-move-agents-along-road.html crimesim blog].
