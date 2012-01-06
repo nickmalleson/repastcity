@@ -1,3 +1,5 @@
+#summary The structure of the RepastCity model.
+
 = RepastCity - Model Structure =
 
 = Contexts and Projections =
@@ -41,4 +43,3 @@ The `ContextManager` class is used to initialise the model. It is responsible fo
 === `repastcity3.environment.Route` ===
 
 The `Route` class contains the code to generate a route from one place to another along the road network. It works by creating a list of coordinates that an agent must traverse to get to their destination. `Route` is responsible for actually moving the agents - e.g. an agent calls `route.travel()` to move. A fuller description of the routing algorithm itself is available on the [http://crimesim.blogspot.com/2008/05/using-repast-to-move-agents-along-road.html crimesim blog].
-
