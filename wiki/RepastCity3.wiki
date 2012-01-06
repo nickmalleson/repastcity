@@ -5,7 +5,7 @@
 
 == Introduction ==
 
-RepastCity is a small [http://repast.sourceforge.net/ Repast Simphony] program which demonstrates how to create a virtual city and move some agents around a road network. Although the code to move around a road network is quite complicated, most of the details can be ignored and developers can concentrate on implementing agent behaviours. This document (as well as the `extending` and `model_structure` documents) briefly describe how the program works and explains how it can be adapted for different applications (my own research interest is [http://crimesim.blogspot.com/ crime simulation]). More (or updated) information can be found on the project's website: http://code.google.com/p/repastcity/
+RepastCity is a small [http://repast.sourceforge.net/ Repast Simphony] program which demonstrates how to create a virtual city and move some agents around a road network. Although the code to move around a road network is quite complicated, most of the details can be ignored and developers can concentrate on implementing agent behaviours. This document (as well as the [ExtendingRepastCity3] and [RC3ModelStructure] documents) briefly describe how the program works and explains how it can be adapted for different applications (my own research interest is [http://crimesim.blogspot.com/ crime simulation]).
 
 People who are new to Repast Simphony definitely need to work through some tutorials first. The ones on the [http://repast.sourceforge.net/ Repast Simphony] website are excellent (in particular I would recommend the [http://repast.sourceforge.net/docs/RepastJavaGettingStarted.pdf Java tutorial]). Repast Simphony has quite a steep learning curve but is well worth learning if you need to build agent-based models, it's an excellent tool.
 
@@ -30,3 +30,9 @@ To run the program you need to download [http://repast.sourceforge.net/download.
 There is a picture below which shows what the program should look like.
 
 http://repastcity.googlecode.com/svn/wiki/images/gui.jpg
+
+== Next? ==
+
+To adapt the model for other uses, you can refer to [RC3ModelStructure] for information about the structure of the model or [ExtendingRepastCity3] for brief instructions about how to extend it.
+
+On my part, forthcoming work will be to incorporate a behavioural framework to make it easier create intelligent agent behaviour.
