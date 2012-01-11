@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import repast.simphony.dataLoader.ContextCreator;
 import repastcity3.environment.Building;
 import repastcity3.environment.Route;
 import repastcity3.main.ContextManager;
@@ -31,6 +32,7 @@ public class DefaultAgent implements IAgent {
 	private static Logger LOGGER = Logger.getLogger(DefaultAgent.class.getName());
 
 	private Building home; // Where the agent lives
+	private Building workplace; // Where the agent works
 	private Route route; // An object to move the agent around the world
 
 	private boolean goingHome = false; // Whether the agent is going to or from their home
@@ -40,14 +42,25 @@ public class DefaultAgent implements IAgent {
 
 	public DefaultAgent() {
 		this.id = uniqueID++;
+		// Find a building that agents can use as their workplace. First, iterate over all buildings in the model
+		for (Building b:ContextManager.buildingContext.getRandomObjects(Building.class, 10000)) {
+			// See if the building is a bank (they will have type==2).
+			if (b.getType()==2) {
+				this.workplace = b;
+				break; // Have found a bank, stop searching.
+			}
+		}
 	}
 
 	@Override
 	public void step() throws Exception {
 
+		// Default agent behaviour, either go home or go to a random house
+		/*
 		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping.");
 		if (this.route == null) {
-			this.goingHome = false; // Must be leaving home
+			// route can only be null when the simulation starts, so the agent must be leaving home
+			this.goingHome = false;
 			// Choose a new building to go to
 			Building b = ContextManager.buildingContext.getRandomObject();
 			this.route = new Route(this, b.getCoords(), b);
@@ -71,6 +84,7 @@ public class DefaultAgent implements IAgent {
 			}
 
 		}
+		*/
 
 	} // step()
 
@@ -118,5 +132,4 @@ public class DefaultAgent implements IAgent {
 	public int hashCode() {
 		return this.id;
 	}
-
 }

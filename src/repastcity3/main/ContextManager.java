@@ -42,6 +42,7 @@ import repast.simphony.dataLoader.ContextBuilder;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
+import repast.simphony.engine.schedule.ScheduledMethod;
 import repast.simphony.parameter.Parameters;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.GeographyParameters;
@@ -261,6 +262,9 @@ public class ContextManager implements ContextBuilder<Object> {
 				schedule.schedule(agentStepParams, a, "step");
 			}
 		}
+		
+		// This is necessary to make sure that methods scheduled with annotations are called. 
+		schedule.schedule(this);
 
 	}
 
@@ -571,5 +575,21 @@ public class ContextManager implements ContextBuilder<Object> {
 	public static Geography<IAgent> getAgentGeography() {
 		return ContextManager.agentGeography;
 	}
+	
+	/* A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
+	 * iteration, to update the variable. */
+	public static double realTime = 0.0;
+	public static int numberOfDays = 0; // It is also useful to count the number of days.
+	
+	@ScheduledMethod(start=1, interval=2)
+	public void updateRealTime() {
+		realTime += (1.0/60.0); // Increase the time by one minute (a 60th of an hour)
+		if (realTime >= 24.0) { // If it's the end of a day then reset the time
+			realTime = 0.0;
+			numberOfDays++; // Also increment our day counter
+			LOGGER.log(Level.INFO, "Simulating day "+numberOfDays);
+		}
+	}
+	
 
 }
