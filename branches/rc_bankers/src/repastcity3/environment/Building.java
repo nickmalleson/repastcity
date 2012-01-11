@@ -29,6 +29,9 @@ public class Building implements FixedGeography, Identified {
 
 	private static Logger LOGGER = Logger.getLogger(Building.class.getName());
 	
+	/** The type of this building. 1 means a normal house, 2 means a bank.*/
+	private int type = 1;
+	
 	/** A list of agents who live here */
 	private List<IAgent> agents;
 
@@ -105,6 +108,20 @@ public class Building implements FixedGeography, Identified {
 		}
 
 		return this.identifier.hashCode();
+	}
+	
+	/**
+	 * Find the type of this building, represented as an integer. 1 means a normal house, 2 means a bank.
+	 */
+	public int getType() {
+		return this.type;
+	}
+
+	/**
+	 * Set the type of this building, represented as an integer. 1 means a normal house, 2 means a bank.
+	 */
+	public void setType(int type) {
+		this.type = type;
 	}
 
 }
