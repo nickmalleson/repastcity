@@ -50,13 +50,42 @@ public class DefaultAgent implements IAgent {
 				break; // Have found a bank, stop searching.
 			}
 		}
+		assert this.workplace != null;
 	}
 
 	@Override
 	public void step() throws Exception {
+		
+		// See what the time is, this will determine what the agent should be doing
+		double theTime = ContextManager.realTime ;
+		if (theTime >= 9.0 && theTime <= 17.0 ) { // 9am - 5pm: Agent should be working 
+			if (this.route==null) { // Must have just turned 9am, need to create route to work
+				this.route = new Route(this, this.workplace.getCoords(), this.workplace); // Create a route to work
+			}
+			// If the agent hasn't made it to work then continue to travel, otherwise we don't need to do anything..
+			if (!this.route.atDestination()) {
+				this.route.travel();
+			}
+
+		}
+		
+		else { // Agent should be at home
+			if (this.route==null) { // Must have just turned 5pm, need to create a route home
+				this.route = new Route(this, this.home.getCoords(), this.home); // Create a route home
+			}
+			// If the agent hasn't made it home then continue to travel, otherwise we don't need to do anything..
+			if (!this.route.atDestination()) {
+				this.route.travel();
+			}
+			
+		}
+		
+		
+		
+		
 
 		// Default agent behaviour, either go home or go to a random house
-		
+		/*
 		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping.");
 		if (this.route == null) {
 			// route can only be null when the simulation starts, so the agent must be leaving home
@@ -84,7 +113,7 @@ public class DefaultAgent implements IAgent {
 			}
 
 		}
-		
+		*/
 
 	} // step()
 
