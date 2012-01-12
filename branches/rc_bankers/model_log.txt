@@ -1,70 +1,10 @@
-Jan 12, 2012 5:09:40 PM org.geotools.referencing.factory.epsg.HSQLDataSource getConnection
-INFO: Creating cached EPSG database. It may take a few minutes.
-Jan 12, 2012 5:09:52 PM repastcity3.main.ContextManager testEnvironment
-SEVERE: There should be equal numbers of roads in the road context and edges in the road network. But there are 2543roads and 2514 edges. The 29 roads that do not have associated edges are: [road: 4000000010906141, road: 4000000010905609, road: 4000000010902464, road: 4000000011234202, road: 4000000010902184, road: 4000000010902172, road: 4000000010901463, road: 4000000011047821, road: 4000000011047814, road: 4000000011047803, road: 4000000010903365, road: 4000000010906351, road: 4000000010902666, road: 4000000010903358, road: 4000000010903796, road: 4000000011150316, road: 4000000010905877, road: 4000000011269949, road: 4000000010902770, road: 4000000010902776, road: 4000000010902777, road: 4000000010903431, road: 4000000010903845, road: 4000000010901644, road: 4000000010901667, road: 4000000010901662, road: 4000000010905349, road: 4000000010901726, road: 4000000010902325]
-Here is a list of roads in a format that copied into AcrGIS for searching:
-"identifier"= '4000000010906141' Or "identifier"= '4000000010905609' Or "identifier"= '4000000010902464' Or "identifier"= '4000000011234202' Or "identifier"= '4000000010902184' Or "identifier"= '4000000010902172' Or "identifier"= '4000000010901463' Or "identifier"= '4000000011047821' Or "identifier"= '4000000011047814' Or "identifier"= '4000000011047803' Or "identifier"= '4000000010903365' Or "identifier"= '4000000010906351' Or "identifier"= '4000000010902666' Or "identifier"= '4000000010903358' Or "identifier"= '4000000010903796' Or "identifier"= '4000000011150316' Or "identifier"= '4000000010905877' Or "identifier"= '4000000011269949' Or "identifier"= '4000000010902770' Or "identifier"= '4000000010902776' Or "identifier"= '4000000010902777' Or "identifier"= '4000000010903431' Or "identifier"= '4000000010903845' Or "identifier"= '4000000010901644' Or "identifier"= '4000000010901667' Or "identifier"= '4000000010901662' Or "identifier"= '4000000010905349' Or "identifier"= '4000000010901726' Or "identifier"= '4000000010902325' Or 
-Jan 12, 2012 5:09:52 PM repastcity3.main.ContextManager build
-SEVERE: There is an eror with the environment, cannot start simulation
-repastcity3.exceptions.EnvironmentError: There should be equal numbers of roads in the road context and edges in the road network. But there are 2543roads and 2514 edges. See previous log messages for debugging info.
-	at repastcity3.main.ContextManager.testEnvironment(ContextManager.java:426)
-	at repastcity3.main.ContextManager.build(ContextManager.java:174)
-	at repast.simphony.dataLoader.engine.ClassNameContextBuilder.build(ClassNameContextBuilder.java:41)
-	at repast.simphony.dataLoader.engine.DataLoaderControllerAction.runInitialize(DataLoaderControllerAction.java:48)
-	at repast.simphony.engine.controller.DefaultController$2.visit(DefaultController.java:179)
-	at repast.simphony.engine.controller.DefaultController$2.visit(DefaultController.java:1)
-	at repast.simphony.util.collections.NaryTree.preOrderTraverals(NaryTree.java:287)
-	at repast.simphony.util.collections.NaryTree.preOrderTraverals(NaryTree.java:290)
-	at repast.simphony.util.collections.NaryTree.preOrderTraverals(NaryTree.java:290)
-	at repast.simphony.util.collections.NaryTree.preOrderTraversal(NaryTree.java:283)
-	at repast.simphony.engine.controller.DefaultController.runInitialize(DefaultController.java:177)
-	at repast.simphony.engine.controller.DefaultController.runInitialize(DefaultController.java:335)
-	at repast.simphony.ui.RSApplication.initSim(RSApplication.java:164)
-	at repast.simphony.ui.action.InitRun.actionPerformed(InitRun.java:17)
-	at javax.swing.AbstractButton.fireActionPerformed(AbstractButton.java:2028)
-	at javax.swing.AbstractButton$Handler.actionPerformed(AbstractButton.java:2351)
-	at javax.swing.DefaultButtonModel.fireActionPerformed(DefaultButtonModel.java:387)
-	at javax.swing.DefaultButtonModel.setPressed(DefaultButtonModel.java:242)
-	at javax.swing.plaf.basic.BasicButtonListener.mouseReleased(BasicButtonListener.java:236)
-	at java.awt.AWTEventMulticaster.mouseReleased(AWTEventMulticaster.java:272)
-	at java.awt.Component.processMouseEvent(Component.java:6373)
-	at javax.swing.JComponent.processMouseEvent(JComponent.java:3267)
-	at java.awt.Component.processEvent(Component.java:6138)
-	at java.awt.Container.processEvent(Container.java:2085)
-	at java.awt.Component.dispatchEventImpl(Component.java:4735)
-	at java.awt.Container.dispatchEventImpl(Container.java:2143)
-	at java.awt.Component.dispatchEvent(Component.java:4565)
-	at java.awt.LightweightDispatcher.retargetMouseEvent(Container.java:4621)
-	at java.awt.LightweightDispatcher.processMouseEvent(Container.java:4282)
-	at java.awt.LightweightDispatcher.dispatchEvent(Container.java:4212)
-	at java.awt.Container.dispatchEventImpl(Container.java:2129)
-	at java.awt.Window.dispatchEventImpl(Window.java:2478)
-	at java.awt.Component.dispatchEvent(Component.java:4565)
-	at java.awt.EventQueue.dispatchEventImpl(EventQueue.java:679)
-	at java.awt.EventQueue.access$000(EventQueue.java:85)
-	at java.awt.EventQueue$1.run(EventQueue.java:638)
-	at java.awt.EventQueue$1.run(EventQueue.java:636)
-	at java.security.AccessController.doPrivileged(Native Method)
-	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
-	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:98)
-	at java.awt.EventQueue$2.run(EventQueue.java:652)
-	at java.awt.EventQueue$2.run(EventQueue.java:650)
-	at java.security.AccessController.doPrivileged(Native Method)
-	at java.security.AccessControlContext$1.doIntersectionPrivilege(AccessControlContext.java:87)
-	at java.awt.EventQueue.dispatchEvent(EventQueue.java:649)
-	at java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:296)
-	at java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:211)
-	at java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:201)
-	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:196)
-	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:188)
-	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
-Jan 12, 2012 5:25:19 PM repastcity3.main.ContextManager build
+Jan 12, 2012 5:37:37 PM repastcity3.main.ContextManager build
 INFO: Creating agents with the agent definition: 'point:people.shp$repastcity3.agent.DefaultAgent'
-Jan 12, 2012 5:25:20 PM repastcity3.agent.AgentFactory createPointAgents
+Jan 12, 2012 5:37:38 PM repastcity3.agent.AgentFactory createPointAgents
 INFO: Have created 22 of type repastcity3.agent.DefaultAgent from file ./data/gis_data/york/people.shp
-Jan 12, 2012 5:25:20 PM repastcity3.agent.AgentFactory createPointAgents
+Jan 12, 2012 5:37:38 PM repastcity3.agent.AgentFactory createPointAgents
 INFO: Have created 44 of type repastcity3.agent.DefaultAgent from file ./data/gis_data/york/people.shp
-Jan 12, 2012 5:25:22 PM org.geotools.renderer.lite.StreamingRenderer paint
+Jan 12, 2012 5:37:39 PM org.geotools.renderer.lite.StreamingRenderer paint
 SEVERE: Latitude 117¡40.6'N is out of range (±90¡).
 java.lang.AssertionError: Latitude 117¡40.6'N is out of range (±90¡).
 	at org.geotools.referencing.operation.projection.MapProjection.checkTransform(MapProjection.java:510)
@@ -139,7 +79,7 @@ Caused by: org.geotools.referencing.operation.projection.PointOutsideEnvelopeExc
 	at org.geotools.referencing.operation.projection.MapProjection$Inverse.transform(MapProjection.java:806)
 	at org.geotools.referencing.operation.projection.MapProjection.checkTransform(MapProjection.java:485)
 	... 67 more
-Jan 12, 2012 5:25:22 PM org.geotools.renderer.lite.StreamingRenderer paint
+Jan 12, 2012 5:37:39 PM org.geotools.renderer.lite.StreamingRenderer paint
 SEVERE: The transform result may be 17,996,710.214 meters away from the expected position. Are you sure that the input coordinates are inside this map projection area of validity? The point is located 79¡40.9'W away from the central meridian and 49¡00.0'S away from the latitude of origin.
 java.lang.AssertionError: The transform result may be 17,996,710.214 meters away from the expected position. Are you sure that the input coordinates are inside this map projection area of validity? The point is located 79¡40.9'W away from the central meridian and 49¡00.0'S away from the latitude of origin.
 	at org.geotools.referencing.operation.projection.MapProjection.checkTransform(MapProjection.java:504)
@@ -210,5 +150,5 @@ java.lang.AssertionError: The transform result may be 17,996,710.214 meters away
 	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:196)
 	at java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:188)
 	at java.awt.EventDispatchThread.run(EventDispatchThread.java:122)
-Jan 12, 2012 5:25:36 PM repastcity3.main.ContextManager printTicks
-INFO: Iterations: 1.0. Speed: 1.326389136236E9sec/ticks.
+Jan 12, 2012 5:38:47 PM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 1.0. Speed: 1.326389927697E9sec/ticks.
