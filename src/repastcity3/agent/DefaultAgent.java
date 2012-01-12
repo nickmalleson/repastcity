@@ -56,7 +56,7 @@ public class DefaultAgent implements IAgent {
 	public void step() throws Exception {
 
 		// Default agent behaviour, either go home or go to a random house
-		/*
+		
 		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping.");
 		if (this.route == null) {
 			// route can only be null when the simulation starts, so the agent must be leaving home
@@ -84,7 +84,7 @@ public class DefaultAgent implements IAgent {
 			}
 
 		}
-		*/
+		
 
 	} // step()
 
