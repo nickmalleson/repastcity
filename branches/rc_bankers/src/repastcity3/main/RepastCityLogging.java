@@ -57,11 +57,8 @@ abstract class RepastCityLogging {
 			FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath());
 			fileHandler.setLevel(Level.ALL); // Write everything to the file
 
-			// Create a formatters.
-			Formatter fileFormatter = new SimpleFormatter();
-
-			// Add the formatters to the handlers
-			fileHandler.setFormatter(fileFormatter);
+			// Add a default formatter
+			fileHandler.setFormatter(new SimpleFormatter());
 
 			// Add the handlers to the logger
 			logger.addHandler(fileHandler);
