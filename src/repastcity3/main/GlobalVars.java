@@ -77,9 +77,8 @@ public abstract class GlobalVars {
 			public String distInMeters;
 		}
 
-		/** The distance that agents can travel each turn. If one iteration is one minute then agents can travel at
-		 * 100m/min which is roughly 4mph*/
-		public static final double TRAVEL_PER_TURN = 100;
+		/** The distance that agents can travel each turn. */
+		public static final double TRAVEL_PER_TURN = 25; // Slower than average (about 0.1mph) but good for this simulation.
 	}
 	
 	/** Names of contexts and projections. These names must match those in the

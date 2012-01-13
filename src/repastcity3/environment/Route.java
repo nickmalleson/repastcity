@@ -435,7 +435,7 @@ public class Route implements Cacheable {
 				// roadsPassed.add(this.roads.get(this.previousRouteCoord()));
 				// Work out the distance and angle to the next coordinate
 				double[] distAndAngle = new double[2];
-				Route.distance(currentCoord, target, distAndAngle);
+				this.distance(currentCoord, target, distAndAngle);
 				// divide by speed because distance might effectively be shorter
 
 				double distToTarget = distAndAngle[0] / speed;
@@ -560,7 +560,7 @@ public class Route implements Cacheable {
 			// TempLogger.out("...Finished Travelling(" + (0.000001 * (System.nanoTime() - time)) + "ms)");
 			// // } // synchronized GlobalVars.TRANSPORT_PARAMS.currentBurglar
 		} catch (Exception e) {
-			LOGGER.log(Level.SEVERE, "Route.trave(): Caught error travelling for " + this.agent.toString()
+			LOGGER.log(Level.SEVERE, "Route.travel(): Caught error travelling for " + this.agent.toString()
 					+ " going to " + "destination "
 					+ (this.destinationBuilding == null ? "" : this.destinationBuilding.toString() + ")"));
 			throw e;
@@ -1274,12 +1274,29 @@ public class Route implements Cacheable {
 	 *            index 1.
 	 * @return The distance between Coordinates c1 and c2.
 	 */
-	public static synchronized double distance(Coordinate c1, Coordinate c2, double[] returnVals) {
-		// TODO check this now, might be different way of getting distance in new Simphony
+	private double distance(Coordinate c1, Coordinate c2, double[] returnVals) {
+//		if (c1.equals(c2)) {
+//			double dist = 0.0;
+//			if (returnVals != null && returnVals.length == 2) {
+//				returnVals[0] = dist;
+//				returnVals[1] = 0;
+//			}
+//			return dist;
+//		}
+		
 		GeodeticCalculator calculator = new GeodeticCalculator(ContextManager.roadProjection.getCRS());
 		calculator.setStartingGeographicPoint(c1.x, c1.y);
 		calculator.setDestinationGeographicPoint(c2.x, c2.y);
-		double distance = calculator.getOrthodromicDistance();
+		double distance;
+		try {
+			distance = calculator.getOrthodromicDistance();
+		} 
+		catch (AssertionError ex) {
+			LOGGER.log(Level.WARNING, "Assertion Error with route for agent "+this.agent.toString()+" to "+
+					(this.destinationBuilding == null ? this.destination.toString() : this.destinationBuilding.toString())+
+					": "+ex.toString(), ex);
+			distance = 0.0;
+		}
 		if (returnVals != null && returnVals.length == 2) {
 			returnVals[0] = distance;
 			double angle = Math.toRadians(calculator.getAzimuth()); // Angle in range -PI to PI

@@ -18,9 +18,11 @@ The following changes will be made to the basic model:
 GIS Data - York
 ===============
 
-The data for the tutorial cover part of the city of York. For the sake of this tutorial, the data have been cut down by removing some of the houses and roads. The image below illustrates the study area; agents live in the suburban areas towards the west of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.
+The data for the tutorial cover part of the city of York. It is real GIS data produced by `Ordnance Survey`_ but, for the sake of this tutorial, the data have been cut down by removing a large number of the houses and roads. The image below illustrates the study area; agents live in a suburban area towards thenorth of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.
 
-XXXX image of data.
+.. _`Ordnance Survey`: http://www.ordnancesurvey.co.uk/oswebsite/products/os-mastermap/index.html
+
+.. image:: figures/york_data.jpg
 
 Loading the Tutorial
 ====================
@@ -83,7 +85,7 @@ However, we want a way for our agents to know what the real time is, in hours an
 
 	/* A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
 	 * iteration, to update the variable. */
-	public static double realTime = 0.0;
+	public static double realTime = 8.0; // (start at 8am)
 	public static int numberOfDays = 0; // It is also useful to count the number of days.
 	
 	@ScheduledMethod(start=1, interval=2)
@@ -104,14 +106,40 @@ After these changes, the end of your ``ContextManager`` class should look someth
 Making the Agents Work
 ======================
 
-Now that we have a clock it is possible to change the agents' beahviour so that they go to work at 9am and then go home again at 5pm. Open the ``DefaultAgent`` class again and find the ``step()`` method. This method was scheduled in the ``ContextManager`` code to be called at each iteration. (If you choose to look at how this is done in ``ContextManager`` you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually run simultaneously in different threads which makes the simulation run much more quickly on multi-core computers). 
+Now that we have a clock it is possible to change the agents' beahviour so that they go to work at 9am and then go home again at 5pm. Open the ``DefaultAgent`` class again and find the ``step()`` method. This method was scheduled in the ``ContextManager`` code to be called at each iteration. (If you choose to look at how this is done in ``ContextManager`` you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).
 
-At the moment, the code in the agents' ``step()`` method simply makes the agent travel from home to a randomly chosen building and back again forever. The first thing to do is either delete or comment-out all of the code in the ``DefaultBurglar.step()`` method. Then add the following:
+At the moment, the code in the agents' ``step()`` method simply makes the agent travel from home to a randomly chosen building and back again forever. The first thing to do is either delete or comment-out all of the code in the ``DefaultBurglar.step()`` method. Then add the following to make them go to work between at 9am and home at 5pm::
 
-XXXX HERE
+	// See what the time is, this will determine what the agent should be doing. The BigDecimal stuff
+	// is just to round the time to 5 decimal places, otherwise it will never be exactly 9.0 or 17.0.
+	double theTime = BigDecimal.valueOf(ContextManager.realTime).
+		round(new MathContext(5,RoundingMode.HALF_UP)).doubleValue();
+	
+	if (theTime == 9.0) { // 9am, Agent should be working			
+		this.route = new Route(this, this.workplace.getCoords(), this.workplace); // Create a route to work
+	} 
+	else if (theTime == 17.0) { // 5pm, agent should go home
+		this.route = new Route(this, this.home.getCoords(), this.home); // Create a route home
+	}
+
+	if (this.route == null) {
+		// Don't do anything if a route hasn't been created.
+	} else if (this.route.atDestination()) {
+		// Have reached our destination, lets delete the old route (more efficient).
+		this.route = null;
+	}
+	else {
+		// Otherwise travel towards the destination
+		this.route.travel();
+	}
+
+Try running the model again and you should see the agents travel to the banking heartland of York and then home again in the evening after making an invaluable contribution to society.
+
 
 Topping Up their Bonuses with Burglary
 ======================================
+
+XXXX
 
 
 Getting Some Results
@@ -120,6 +148,70 @@ Getting Some Results
 
 Austerity Road Closures
 =======================
+
+In these times of austerity, the Council have decided that they need to close some roads to save money. They have identified the main road linking our bankers' suburb with the city centre as a good one to close, so in this section we will implement this change. In Repast Simphony, relationships between objects can be represented by a ``NetworkProjection``. These are commonly used to represent social networks but can also be used to build a road network by defining which roads are linked to each other. A *node* in the network represents an intersection (the juntion where two roads meet) and *edges* in the network represent the roads themselves. Each edge has a weight which, in this case, is the length of the road section between two intersections. Therefore when the ``Route`` class builds a route for an agent it uses the network to find the shortest path. For more information about routing, have a look here_.
+
+.. _here: http://crimesim.blogspot.com/2008/05/using-repast-to-move-agents-along-road.html
+
+To implement the change, we will add some code to the ``ContextManager`` class to:
+
+1. look through all the roads
+2. find the ones that are to be closed
+3. increase their weight value so that it looks like they are incredibly long.
+
+Afterwards the ``Route`` class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.
+
+Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 260). Then insert this code directly after the '``schedule.schedule(this);``' line (the code will be explained in more detail below)::
+
+	// This array holds the unique identifiers for the roads that are going to be closed (these can be
+	// found by looking through the GIS data)
+	List<String> roadsToClose = Arrays.asList(new String[]{"4000000010901474", "4000000010901576", 
+			"4000000010901602", "4000000010901475", "4000000010901753", "4000000010901834", "4000000010901836", 
+			"4000000011243306", "4000000011255522", "4000000010901758", "4000000010901835", "4000000010901864", 
+			"4000000010901750" });
+	
+	// Iterate over all edges in the road network
+	for (RepastEdge e:ContextManager.roadNetwork.getEdges()) {
+		NetworkEdge edge = (NetworkEdge) e; // Cast to our own edge implementation 
+		try {
+			// See if the edge is one of the ones to be closed
+			String roadID = edge.getRoad().getIdentifier();
+			if (roadsToClose.contains(roadID)) {
+				System.out.println("Increasing weight of road "+roadID);
+				edge.setWeight(100000);
+			}
+		} catch (NoIdentifierException e1) {
+			// This only happens if the a road in the input data doesn't have a unique value in the 'identifier' column
+			LOGGER.log(Level.SEVERE, "Internal error, could not find a road identifier.");
+		}
+	}
+
+It is worth explaining the above code in slightly more detail as it says a lot about how Repast Simphony works. The line::
+
+	for (RepastEdge e:ContextManager.roadNetwork.getEdges()) {
+	
+iterates over all the edges in the road network and returns objects of type ``RepastEdge``. However, when the network is being build for this model, it actually creates edges of the ``NetworkEdge`` type (in the ``repastcity3.environment`` package). These edges have a method called ``getRoad()`` which returns the original road that was used to create the edge. Hence we can cast the edges::
+
+	NetworkEdge edge = (NetworkEdge) e; // Cast to our own edge implementation 
+	
+and then get the underlying road and its identifier::
+
+	String roadID = edge.getRoad().getIdentifier();
+
+The ``try-catch`` block is necessary because ``Road`` objects check that they have unique identifiers. This is mainly tell the developer if there is something wrong with the input GIS data: the road data must have a text column called 'identifier' and the road objects must have a unique string in this field.
+
+Finally, if the road identifier matches one of the ID's of the roads that we want to close, simply increase the weight of the road so that it will never be used when the agents create new routes::
+
+		if (roadsToClose.contains(roadID)) {
+			edge.setWeight(100000);
+		}
+
+Once you have finished adding the new code, the ``ContextManager`` class should look similar to below:
+
+.. image:: figures/road_closure_code.jpg
+
+Where do the burgle now?
+========================
 
 
 Conclusion

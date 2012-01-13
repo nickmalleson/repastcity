@@ -23,10 +23,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -77,7 +79,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	private static Logger LOGGER = Logger.getLogger(ContextManager.class.getName());
 
 	// Optionally force agent threading off (good for debugging)
-	private static final boolean TURN_OFF_THREADING = false;;
+	private static final boolean TURN_OFF_THREADING = true;;
 
 	private static Properties properties;
 
@@ -265,8 +267,33 @@ public class ContextManager implements ContextBuilder<Object> {
 		
 		// This is necessary to make sure that methods scheduled with annotations are called. 
 		schedule.schedule(this);
+		
+		// INSERT ROAD CLOSURE CODE HERE
+		
+		// This array holds the unique identifiers for the roads that are going to be closed (these can be
+		// found by looking through the GIS data)
+		List<String> roadsToClose = Arrays.asList(new String[]{"4000000010901474", "4000000010901576", 
+				"4000000010901602", "4000000010901475", "4000000010901753", "4000000010901834", "4000000010901836", 
+				"4000000011243306", "4000000011255522", "4000000010901758", "4000000010901835", "4000000010901864", 
+				"4000000010901750" });
+		
+		// Iterate over all edges in the road network
+		for (RepastEdge e:ContextManager.roadNetwork.getEdges()) {
+			NetworkEdge edge = (NetworkEdge) e; // Cast to our own edge implementation 
+			// See if the edge is one of the ones to be closed
+			try {
+				String roadID = edge.getRoad().getIdentifier();
+				if (roadsToClose.contains(roadID)) {
+					System.out.println("Increasing weight of road "+roadID);
+					edge.setWeight(100000);
+				}
+			} catch (NoIdentifierException e1) {
+				// This only happens if the a road in the input data doesn't have a unique value in the 'identifier' column
+				LOGGER.log(Level.SEVERE, "Internal error, could not find a road identifier.");
+			}
+		}
 
-	}
+	} // end of build() function
 
 	private static long speedTimer = -1; // For recording time per N iterations 
 	public void printTicks() {
@@ -578,12 +605,13 @@ public class ContextManager implements ContextBuilder<Object> {
 	
 	/* A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
 	 * iteration, to update the variable. */
-	public static double realTime = 0.0;
+	public static double realTime = 8.0; // (start at 8am)
 	public static int numberOfDays = 0; // It is also useful to count the number of days.
 	
 	@ScheduledMethod(start=1, interval=2)
 	public void updateRealTime() {
 		realTime += (1.0/60.0); // Increase the time by one minute (a 60th of an hour)
+		
 		if (realTime >= 24.0) { // If it's the end of a day then reset the time
 			realTime = 0.0;
 			numberOfDays++; // Also increment our day counter
