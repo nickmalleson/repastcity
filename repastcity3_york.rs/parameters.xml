@@ -12,6 +12,13 @@
 						converter="repast.simphony.parameter.StringConverterFactory$StringStringConverter"
 									
 		/>
+		<parameter name="END_TIME" displayName="End Time" type="int" 
+						defaultValue="10000"
+						isReadOnly="false" 
+						converter="repast.simphony.parameter.StringConverterFactory$IntConverter"
+									
+		/>
+
 		</parameters>
 
 

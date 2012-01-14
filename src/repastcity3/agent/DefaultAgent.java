@@ -21,12 +21,11 @@ package repastcity3.agent;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import repast.simphony.dataLoader.ContextCreator;
+import repast.simphony.random.RandomHelper;
 import repastcity3.environment.Building;
 import repastcity3.environment.Route;
 import repastcity3.main.ContextManager;
@@ -56,18 +55,17 @@ public class DefaultAgent implements IAgent {
 		}
 		assert this.workplace != null;
 	}
- 
+
 	@Override
 	public void step() throws Exception {
-
 		// See what the time is, this will determine what the agent should be doing. The BigDecimal stuff
 		// is just to round the time to 5 decimal places, otherwise it will never be exactly 9.0 or 17.0.
-		double theTime = BigDecimal.valueOf(ContextManager.realTime).round(new MathContext(5,RoundingMode.HALF_UP)).doubleValue();
-		
-		if (theTime == 9.0) { // 9am, Agent should be working			
+		double theTime = BigDecimal.valueOf(ContextManager.realTime).round(new MathContext(5, RoundingMode.HALF_UP))
+				.doubleValue();
+
+		if (theTime == 9.0) { // 9am, Agent should be working
 			this.route = new Route(this, this.workplace.getCoords(), this.workplace); // Create a route to work
-		} 
-		else if (theTime == 17.0) { // 5pm, agent should go home
+		} else if (theTime == 17.0) { // 5pm, agent should go home
 			this.route = new Route(this, this.home.getCoords(), this.home); // Create a route home
 		}
 
@@ -76,28 +74,54 @@ public class DefaultAgent implements IAgent {
 		} else if (this.route.atDestination()) {
 			// Have reached our destination, lets delete the old route (more efficient).
 			this.route = null;
-		}
-		else {
+		} else {
 			// Otherwise travel towards the destination
 			this.route.travel();
-		}
+			for (Building b : this.route.getPassedBuildings()) {
+				if (b.getType() == 1) { // Only burgle houses (not banks too)
+					// Roll a dice to see if this house should be burgled (1 in 100 chance)
+					double random;
+					synchronized (ContextManager.randomLock) {
+						// This synchronized block ensures that only one agent at a time can access RandomHelper
+						random = RandomHelper.nextDouble();
+					}
+					if (random >= 0.99) {
+						b.burgled(); // Tell the building that it has been burgled
+						LOGGER.log(Level.FINE, "Agent " + this.toString() + " has burgled building "
+								+ b.getIdentifier() + "Total: " + b.getNumBurglaries() + ". Random value: " + random);
+					}
+				}
+			} // for passed buildings
+
+		} // else
 
 		// Default agent behaviour, either go home or go to a random house
-		/*
-		 * LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping."); if (this.route == null) { // route can only be
-		 * null when the simulation starts, so the agent must be leaving home this.goingHome = false; // Choose a new
-		 * building to go to Building b = ContextManager.buildingContext.getRandomObject(); this.route = new Route(this,
-		 * b.getCoords(), b); LOGGER.log(Level.FINE, this.toString() + " created new route to " + b.toString()); } if
-		 * (!this.route.atDestination()) { this.route.travel(); LOGGER.log(Level.FINE, this.toString() +
-		 * " travelling to " + this.route.getDestinationBuilding().toString()); } else { // Have reached destination,
-		 * now either go home or onto another building if (this.goingHome) { this.goingHome = false; Building b =
-		 * ContextManager.buildingContext.getRandomObject(); this.route = new Route(this, b.getCoords(), b);
-		 * LOGGER.log(Level.FINE, this.toString() + " reached home, now going to " + b.toString()); } else {
-		 * LOGGER.log(Level.FINE, this.toString() + " reached " + this.route.getDestinationBuilding().toString() +
-		 * ", now going home"); this.goingHome = true; this.route = new Route(this, this.home.getCoords(), this.home); }
-		 * 
-		 * }
-		 */
+
+//		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping.");
+//		if (this.route == null) {
+//			// route can only be null when the simulation starts, so the agent must be leaving home
+//			this.goingHome = false; // Choose a new building to go to
+//			Building b = ContextManager.buildingContext.getRandomObject();
+//			this.route = new Route(this, b.getCoords(), b);
+//			LOGGER.log(Level.FINE, this.toString() + " created new route to " + b.toString());
+//		}
+//		if (!this.route.atDestination()) {
+//			this.route.travel();
+//			LOGGER.log(Level.FINE, this.toString() + " travelling to " + this.route.getDestinationBuilding().toString());
+//		} else {
+//			// Have reached destination, now either go home or onto another building
+//			if (this.goingHome) {
+//				this.goingHome = false;
+//				Building b = ContextManager.buildingContext.getRandomObject();
+//				this.route = new Route(this, b.getCoords(), b);
+//				LOGGER.log(Level.FINE, this.toString() + " reached home, now going to " + b.toString());
+//			} else {
+//				LOGGER.log(Level.FINE, this.toString() + " reached " + this.route.getDestinationBuilding().toString()
+//						+ ", now going home");
+//				this.goingHome = true;
+//				this.route = new Route(this, this.home.getCoords(), this.home);
+//			}
+//		}
 
 	} // step()
 

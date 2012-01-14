@@ -14,7 +14,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package repastcity3.environment;
 
@@ -48,6 +48,7 @@ import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 
+import repast.simphony.random.RandomHelper;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.graph.RepastEdge;
 import repast.simphony.space.graph.ShortestPath;
@@ -119,6 +120,12 @@ public class Route implements Cacheable {
 	private static volatile BuildingsOnRoadCache buildingsOnRoadCache;
 	// To stop threads competing for the cache:
 	private static Object buildingsOnRoadCacheLock = new Object();
+
+	// The buildings that the agent has just walked passed (set each time travel() is called).
+	private List<Building> passedBuildings = new ArrayList<Building>();;
+
+	// Used whenever Geometry objects need to be created
+	private final GeometryFactory geomFac = new GeometryFactory();
 
 	/*
 	 * Store a route once it has been created, might be used later (note that the same object acts as key and value).
@@ -310,7 +317,7 @@ public class Route implements Cacheable {
 			LOGGER.log(Level.SEVERE, "Route.setRoute(): Problem creating route for " + this.agent.toString()
 					+ " going from " + currentCoord.toString() + " to " + this.destination.toString() + "("
 					+ (this.destinationBuilding == null ? "" : this.destinationBuilding.toString())
-					+ ") See earlier messages error messages for more info.");
+					+ ") See earlier messages error messages for more info.", e);
 			throw e;
 		}
 		// Cache the route and route speeds
@@ -413,7 +420,7 @@ public class Route implements Cacheable {
 			if (this.atDestination()) {
 				return;
 			}
-			double time = System.nanoTime();
+			// double time = System.nanoTime();
 
 			// Store the roads the agent walks along (used to populate the awareness space)
 			// List<Road> roadsPassed = new ArrayList<Road>();
@@ -422,7 +429,6 @@ public class Route implements Cacheable {
 			Coordinate target = null; // Target coordinate we're heading for (in route list)
 			boolean travelledMaxDist = false; // True when travelled maximum distance this iteration
 			double speed; // The speed to travel to next coord
-			GeometryFactory geomFac = new GeometryFactory();
 			currentCoord = ContextManager.getAgentGeometry(this.agent).getCoordinate();
 
 			while (!travelledMaxDist && !this.atDestination()) {
@@ -478,9 +484,22 @@ public class Route implements Cacheable {
 
 					travelledMaxDist = true;
 				} // else
-			} // while
+			} // while travelling
 
-//			this.printRoute();
+			// Add the buildings that the agent is close to now that they have finished moving. This isn't very
+			// accurate but will do for the bankers tutorial
+			Geometry searchArea = this.geomFac.createPoint(this.routeX.get(this.currentPosition)).buffer(
+					GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE.MEDIUM.dist);
+			this.passedBuildings.clear();
+			this.passedBuildings.addAll(SpatialIndexManager.search(ContextManager.buildingProjection, searchArea));
+			
+			// Print passed buildings (for debugging)
+//			for (Building b : SpatialIndexManager.search(ContextManager.buildingProjection, searchArea)) {
+//				this.passedBuildings.add(b);
+//				System.out.println("Toid = '" + b.getIdentifier() + "' OR ");
+//			}
+
+			// this.printRoute();
 
 			/*
 			 * TODO Agent has finished moving, now just add all the buildings and communities passed to their awareness
@@ -567,100 +586,101 @@ public class Route implements Cacheable {
 		} // catch exception
 	}
 
-	/**
-	 * Get the distance (on a network) between the origin and destination. Take into account the Burglar because they
-	 * might be able to speed up the route by using different transport methods. Actually calculates the distance
-	 * between the nearest Junctions between the source and destination. Note that the GRID environment doesn't have any
-	 * transport routes in it so all distances will always be the same regardless of the agent.
-	 * 
-	 * @param agent
-	 * @param destination
-	 * @return
-	 */
-	public double getDistance(IAgent theBurglar, Coordinate origin, Coordinate destination) {
-
-		// // See if this distance has already been calculated
-		// if (Route.routeDistanceCache == null) {
-		// Route.routeDistanceCache = new Hashtable<CachedRouteDistance, Double>();
-		// }
-		// CachedRouteDistance crd = new CachedRouteDistance(origin, destination, theBurglar.getTransportAvailable());
-		//
-		// synchronized (Route.routeDistanceCache) {
-		// Double dist = Route.routeDistanceCache.get(crd);
-		// if (dist != null) {
-		// TempLogger.out("Route.ggetDistance, found a cached route distance from " + origin + " to "
-		// + destination + " using available transport " + theBurglar.getTransportAvailable()
-		// + ", returning it.");
-		// return dist;
-		// }
-		// }
-		// No distance in the cache, calculate it
-		synchronized (GlobalVars.TRANSPORT_PARAMS.currentBurglarLock) {
-			GlobalVars.TRANSPORT_PARAMS.currentAgent = theBurglar;
-			// Find the closest Junctions to the origin and destination
-			double minOriginDist = Double.MAX_VALUE;
-			double minDestDist = Double.MAX_VALUE;
-			double dist;
-			Junction closestOriginJunc = null;
-			Junction closestDestJunc = null;
-			DistanceOp distOp = null;
-			GeometryFactory geomFac = new GeometryFactory();
-			// TODO EFFICIENCY: here could iterate over near junctions instead of all?
-			for (Junction j : ContextManager.junctionContext.getObjects(Junction.class)) {
-				// Check that the agent can actually get to the junction (if might be part of a transport route
-				// that the agent doesn't have access to)
-				boolean accessibleJunction = false;
-				accessibleJunc: for (RepastEdge<Junction> e : ContextManager.roadNetwork.getEdges(j)) {
-					NetworkEdge<Junction> edge = (NetworkEdge<Junction>) e;
-					for (String s : edge.getTypes()) {
-						if (theBurglar.getTransportAvailable().contains(s)) {
-							accessibleJunction = true;
-							break accessibleJunc;
-						}
-					} // for types
-				}// for edges
-				if (!accessibleJunction) { // Agent can't get to the junction, ignore it
-					continue;
-				}
-				Point juncPoint = geomFac.createPoint(j.getCoords());
-
-				distOp = new DistanceOp(juncPoint, geomFac.createPoint(origin));
-				dist = distOp.distance();
-				if (dist < minOriginDist) {
-					minOriginDist = dist;
-					closestOriginJunc = j;
-				}
-				// Destination
-				distOp = new DistanceOp(juncPoint, geomFac.createPoint(destination));
-				dist = distOp.distance();
-				if (dist < minDestDist) {
-					minDestDist = dist;
-					closestDestJunc = j;
-				}
-			} // for Junctions
-				// Return the shortest path plus the distance from the origin/destination to their junctions
-				// TODO NOTE: Bug in ShortestPath so have to make finalize is called, otherwise following lines are
-				// neater
-				// - MAYBE THIS HAS BEEN FIXED BY REPAST NOW.
-				// return (new ShortestPath<Junction>(EnvironmentFactory.getRoadNetwork(),
-				// closestOriginJunc)).getPathLength(closestDestJunc)+ minOriginDist + minDestDist ;
-				// TODO : using non-deprecated methods don't work on NGS, probably need to update repast libraries
-			ShortestPath<Junction> p = new ShortestPath<Junction>(ContextManager.roadNetwork, closestOriginJunc);
-			double theDist = p.getPathLength(closestDestJunc);
-			// ShortestPath<Junction> p = new
-			// ShortestPath<Junction>(EnvironmentFactory.getRoadNetwork());
-			// double theDist = p.getPathLength(closestOriginJunc,closestDestJunc);
-			p.finalize();
-			p = null;
-			double finalDist = theDist + minOriginDist + minDestDist;
-			// // Cache this distance
-			// synchronized (Route.routeDistanceCache) {
-			// Route.routeDistanceCache.put(crd, finalDist);
-			// }
-			return finalDist;
-		} // synchronized
-
-	}
+	// /**
+	// * Get the distance (on a network) between the origin and destination. Take into account the Burglar because they
+	// * might be able to speed up the route by using different transport methods. Actually calculates the distance
+	// * between the nearest Junctions between the source and destination. Note that the GRID environment doesn't have
+	// any
+	// * transport routes in it so all distances will always be the same regardless of the agent.
+	// *
+	// * @param agent
+	// * @param destination
+	// * @return
+	// */
+	// public double getDistance(IAgent theBurglar, Coordinate origin, Coordinate destination) {
+	//
+	// // // See if this distance has already been calculated
+	// // if (Route.routeDistanceCache == null) {
+	// // Route.routeDistanceCache = new Hashtable<CachedRouteDistance, Double>();
+	// // }
+	// // CachedRouteDistance crd = new CachedRouteDistance(origin, destination, theBurglar.getTransportAvailable());
+	// //
+	// // synchronized (Route.routeDistanceCache) {
+	// // Double dist = Route.routeDistanceCache.get(crd);
+	// // if (dist != null) {
+	// // TempLogger.out("Route.ggetDistance, found a cached route distance from " + origin + " to "
+	// // + destination + " using available transport " + theBurglar.getTransportAvailable()
+	// // + ", returning it.");
+	// // return dist;
+	// // }
+	// // }
+	// // No distance in the cache, calculate it
+	// synchronized (GlobalVars.TRANSPORT_PARAMS.currentBurglarLock) {
+	// GlobalVars.TRANSPORT_PARAMS.currentAgent = theBurglar;
+	// // Find the closest Junctions to the origin and destination
+	// double minOriginDist = Double.MAX_VALUE;
+	// double minDestDist = Double.MAX_VALUE;
+	// double dist;
+	// Junction closestOriginJunc = null;
+	// Junction closestDestJunc = null;
+	// DistanceOp distOp = null;
+	// GeometryFactory geomFac = new GeometryFactory();
+	// // TODO EFFICIENCY: here could iterate over near junctions instead of all?
+	// for (Junction j : ContextManager.junctionContext.getObjects(Junction.class)) {
+	// // Check that the agent can actually get to the junction (if might be part of a transport route
+	// // that the agent doesn't have access to)
+	// boolean accessibleJunction = false;
+	// accessibleJunc: for (RepastEdge<Junction> e : ContextManager.roadNetwork.getEdges(j)) {
+	// NetworkEdge<Junction> edge = (NetworkEdge<Junction>) e;
+	// for (String s : edge.getTypes()) {
+	// if (theBurglar.getTransportAvailable().contains(s)) {
+	// accessibleJunction = true;
+	// break accessibleJunc;
+	// }
+	// } // for types
+	// }// for edges
+	// if (!accessibleJunction) { // Agent can't get to the junction, ignore it
+	// continue;
+	// }
+	// Point juncPoint = geomFac.createPoint(j.getCoords());
+	//
+	// distOp = new DistanceOp(juncPoint, geomFac.createPoint(origin));
+	// dist = distOp.distance();
+	// if (dist < minOriginDist) {
+	// minOriginDist = dist;
+	// closestOriginJunc = j;
+	// }
+	// // Destination
+	// distOp = new DistanceOp(juncPoint, geomFac.createPoint(destination));
+	// dist = distOp.distance();
+	// if (dist < minDestDist) {
+	// minDestDist = dist;
+	// closestDestJunc = j;
+	// }
+	// } // for Junctions
+	// // Return the shortest path plus the distance from the origin/destination to their junctions
+	// // TODO NOTE: Bug in ShortestPath so have to make finalize is called, otherwise following lines are
+	// // neater
+	// // - MAYBE THIS HAS BEEN FIXED BY REPAST NOW.
+	// // return (new ShortestPath<Junction>(EnvironmentFactory.getRoadNetwork(),
+	// // closestOriginJunc)).getPathLength(closestDestJunc)+ minOriginDist + minDestDist ;
+	// // TODO : using non-deprecated methods don't work on NGS, probably need to update repast libraries
+	// ShortestPath<Junction> p = new ShortestPath<Junction>(ContextManager.roadNetwork, closestOriginJunc);
+	// double theDist = p.getPathLength(closestDestJunc);
+	// // ShortestPath<Junction> p = new
+	// // ShortestPath<Junction>(EnvironmentFactory.getRoadNetwork());
+	// // double theDist = p.getPathLength(closestOriginJunc,closestDestJunc);
+	// p.finalize();
+	// p = null;
+	// double finalDist = theDist + minOriginDist + minDestDist;
+	// // // Cache this distance
+	// // synchronized (Route.routeDistanceCache) {
+	// // Route.routeDistanceCache.put(crd, finalDist);
+	// // }
+	// return finalDist;
+	// } // synchronized
+	//
+	// }
 
 	/**
 	 * Find the nearest coordinate which is part of a Road. Returns the coordinate which is actually the closest to the
@@ -693,7 +713,7 @@ public class Route implements Cacheable {
 				File serialisedLoc = new File(gisDir + ContextManager.getProperty(GlobalVars.BuildingsRoadsCoordsCache));
 
 				nearestRoadCoordCache = NearestRoadCoordCache.getInstance(ContextManager.buildingProjection,
-						buildingsFile, ContextManager.roadProjection, roadsFile, serialisedLoc, new GeometryFactory());
+						buildingsFile, ContextManager.roadProjection, roadsFile, serialisedLoc, this.geomFac);
 			} // if not cached
 		} // synchronized
 		return nearestRoadCoordCache.get(inCoord);
@@ -732,14 +752,14 @@ public class Route implements Cacheable {
 								+ "to ignore this as a route should still be created anyway.");
 					} else {
 						p = new ShortestPath<Junction>(ContextManager.roadNetwork);
-						pathLength = p.getPathLength(o,d);
+						pathLength = p.getPathLength(o, d);
 						if (pathLength < shortestPathLength) {
 							shortestPathLength = pathLength;
-							shortestPath = p.getPath(o,d);
-//							ShortestPath<Junction> p2 = new ShortestPath<Junction>(ContextManager.roadNetwork);
-//							shortestPath = p2.getPath(o, d);
-//							p2.finalize();
-//							p2 = null;
+							shortestPath = p.getPath(o, d);
+							// ShortestPath<Junction> p2 = new ShortestPath<Junction>(ContextManager.roadNetwork);
+							// shortestPath = p2.getPath(o, d);
+							// p2.finalize();
+							// p2 = null;
 							// shortestPath = p1.getPath(o, d);
 							// p1.finalize(); p1 = null;
 							routeEndpoints[0] = o;
@@ -830,7 +850,6 @@ public class Route implements Cacheable {
 			// If heading away form junction current coord must be at beginning of road segment
 			ArrayUtils.reverse(roadCoords);
 		}
-		GeometryFactory geomFac = new GeometryFactory();
 		Point destinationPointGeom = geomFac.createPoint(destinationCoord);
 		Point currentPointGeom = geomFac.createPoint(currentCoord);
 		// If still false at end then algorithm hasn't worked
@@ -838,7 +857,8 @@ public class Route implements Cacheable {
 		search: for (int i = 0; i < roadCoords.length - 1; i++) {
 			Coordinate[] segmentCoords = new Coordinate[] { roadCoords[i], roadCoords[i + 1] };
 			// Draw a small buffer around the line segment and look for the coordinate within the buffer
-			Geometry buffer = geomFac.createLineString(segmentCoords).buffer(GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE.SMALL.dist);
+			Geometry buffer = geomFac.createLineString(segmentCoords).buffer(
+					GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE.SMALL.dist);
 			if (!toJunction) {
 				/* If heading away from a junction, keep adding road coords until we find the destination */
 				coordList.add(roadCoords[i]);
@@ -1066,6 +1086,13 @@ public class Route implements Cacheable {
 	// TempLogger.out("ROUTE AFTER REMOVING PAIRS");
 	// this.printRoute();
 	// }
+	
+	/**
+	 * Return the buildings that were passed the last time <code>travel()</code> was called.
+	 */
+	public List<Building> getPassedBuildings() {
+		return this.passedBuildings;
+	}
 
 	private void printRoute() {
 		StringBuilder out = new StringBuilder();
@@ -1079,7 +1106,6 @@ public class Route implements Cacheable {
 		LOGGER.info(out.toString());
 	}
 
-	
 	/**
 	 * Find the nearest object in the given geography to the coordinate.
 	 * 
@@ -1180,19 +1206,19 @@ public class Route implements Cacheable {
 		return this.destination;
 	}
 
-	/**
-	 * Maintain a cache of all coordinates which are part of a road segment. Store the coords and all the road(s) they
-	 * are part of.
-	 * 
-	 * @param coord
-	 *            The coordinate which should be part of a road geometry
-	 * @return The road(s) which the coordinate is part of or null if the coordinate is not part of any road
-	 */
-	private List<Road> getRoadFromCoordCache(Coordinate coord) {
-
-		populateCoordCache(); // Check the cache has been populated
-		return coordCache.get(coord);
-	}
+	// /**
+	// * Maintain a cache of all coordinates which are part of a road segment. Store the coords and all the road(s) they
+	// * are part of.
+	// *
+	// * @param coord
+	// * The coordinate which should be part of a road geometry
+	// * @return The road(s) which the coordinate is part of or null if the coordinate is not part of any road
+	// */
+	// private List<Road> getRoadFromCoordCache(Coordinate coord) {
+	//
+	// populateCoordCache(); // Check the cache has been populated
+	// return coordCache.get(coord);
+	// }
 
 	/**
 	 * Test if a coordinate is part of a road segment.
@@ -1256,7 +1282,7 @@ public class Route implements Cacheable {
 			File roadsFile = new File(gisDir + GlobalVars.RoadShapefile);
 			File serialLoc = new File(gisDir + ContextManager.getProperty(GlobalVars.BuildingsRoadsCache));
 			buildingsOnRoadCache = BuildingsOnRoadCache.getInstance(ContextManager.buildingProjection, buildingsFile,
-					ContextManager.roadProjection, roadsFile, serialLoc, new GeometryFactory());
+					ContextManager.roadProjection, roadsFile, serialLoc, this.geomFac);
 		} // if not cached
 		return buildingsOnRoadCache.get(road);
 	}
@@ -1275,26 +1301,27 @@ public class Route implements Cacheable {
 	 * @return The distance between Coordinates c1 and c2.
 	 */
 	private double distance(Coordinate c1, Coordinate c2, double[] returnVals) {
-//		if (c1.equals(c2)) {
-//			double dist = 0.0;
-//			if (returnVals != null && returnVals.length == 2) {
-//				returnVals[0] = dist;
-//				returnVals[1] = 0;
-//			}
-//			return dist;
-//		}
-		
+		// if (c1.equals(c2)) {
+		// double dist = 0.0;
+		// if (returnVals != null && returnVals.length == 2) {
+		// returnVals[0] = dist;
+		// returnVals[1] = 0;
+		// }
+		// return dist;
+		// }
+
 		GeodeticCalculator calculator = new GeodeticCalculator(ContextManager.roadProjection.getCRS());
 		calculator.setStartingGeographicPoint(c1.x, c1.y);
 		calculator.setDestinationGeographicPoint(c2.x, c2.y);
 		double distance;
 		try {
 			distance = calculator.getOrthodromicDistance();
-		} 
-		catch (AssertionError ex) {
-			LOGGER.log(Level.WARNING, "Assertion Error with route for agent "+this.agent.toString()+" to "+
-					(this.destinationBuilding == null ? this.destination.toString() : this.destinationBuilding.toString())+
-					": "+ex.toString(), ex);
+		} catch (AssertionError ex) {
+			LOGGER.log(Level.WARNING, "Assertion Error with route for agent "
+					+ this.agent.toString()
+					+ " to "
+					+ (this.destinationBuilding == null ? this.destination.toString() : this.destinationBuilding
+							.toString()) + ": " + ex.toString(), ex);
 			distance = 0.0;
 		}
 		if (returnVals != null && returnVals.length == 2) {
