@@ -32,6 +32,9 @@ public class Building implements FixedGeography, Identified {
 	/** The type of this building. 1 means a normal house, 2 means a bank.*/
 	private int type = 1;
 	
+	/** Number of times this house has been burgled */
+	private int numBurglaries = 0;
+	
 	/** A list of agents who live here */
 	private List<IAgent> agents;
 
@@ -122,6 +125,20 @@ public class Building implements FixedGeography, Identified {
 	 */
 	public void setType(int type) {
 		this.type = type;
+	}
+
+	/**
+	 * Find the number of times that this house has been burgled.
+	 */
+	public int getNumBurglaries() {
+		return this.numBurglaries;
+	}
+	
+	/**
+	 * Tell the house it has been burgled (increase it's burglary counter).
+	 */
+	public synchronized void burgled() {
+		this.numBurglaries++;
 	}
 
 }

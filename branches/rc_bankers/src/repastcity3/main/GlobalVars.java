@@ -60,8 +60,8 @@ public abstract class GlobalVars {
 			/** The smallest distance, rarely used. Approximately 0.001m*/
 			SMALL(0.00000001, "0.001"),
 			/** Most commonly used distance, OK for looking for nearby houses or roads.
-			 * Approximatey 110m */
-			MEDIUM(0.001,"110"),
+			 * Approximatey 50m */
+			MEDIUM(0.0005,"50"),
 			/** Largest buffer, approximately 550m. I use this when doing things that
 			 * don't need to be done often, like populating caches.*/
 			LARGE(0.005,"550");
@@ -78,7 +78,7 @@ public abstract class GlobalVars {
 		}
 
 		/** The distance that agents can travel each turn. */
-		public static final double TRAVEL_PER_TURN = 25; // Slower than average (about 0.1mph) but good for this simulation.
+		public static final double TRAVEL_PER_TURN = 50; // Slower than average (about 2mph) but good for this simulation.
 	}
 	
 	/** Names of contexts and projections. These names must match those in the

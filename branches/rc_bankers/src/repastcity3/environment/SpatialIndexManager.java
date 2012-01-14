@@ -57,7 +57,7 @@ public abstract class SpatialIndexManager implements Cacheable {
 	 * @param clazz The class of the objects that are being stored in the geography.
 	 * @param <T> The type of object stored in the geography.
 	 */
-	public static <T> void createIndex(Geography<T> geog, Class<T> clazz) {
+	public static synchronized <T> void createIndex(Geography<T> geog, Class<T> clazz) {
 		Index<T> i = new Index<T>(geog, clazz);
 		SpatialIndexManager.indices.put(geog, i);
 	}
@@ -155,7 +155,7 @@ public abstract class SpatialIndexManager implements Cacheable {
 	 * Find out whether or not this <code>SpatialIndexManager</code> has an index for the
 	 * given geography.
 	 */
-	public static boolean hasIndex(Geography<?> geog) {
+	public static synchronized boolean hasIndex(Geography<?> geog) {
 		return indices.containsKey(geog);
 	}
 

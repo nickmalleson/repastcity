@@ -18,9 +18,11 @@ along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
 
 package repastcity3.main;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Arrays;
@@ -79,9 +81,14 @@ public class ContextManager implements ContextBuilder<Object> {
 	private static Logger LOGGER = Logger.getLogger(ContextManager.class.getName());
 
 	// Optionally force agent threading off (good for debugging)
-	private static final boolean TURN_OFF_THREADING = true;;
+	private static final boolean TURN_OFF_THREADING = false;
 
 	private static Properties properties;
+	
+	/** A lock used to make <code>RandomHelper</code> thread safe. Classes should ensure they
+	 * obtain this object before calling RandomHelper methods.
+	 */
+	public static Object randomLock = new Object();
 
 	/*
 	 * Pointers to contexts and projections (for convenience). Most of these can be made public, but the agent ones
@@ -217,18 +224,77 @@ public class ContextManager implements ContextBuilder<Object> {
 		}
 
 		// Create the schedule
-		createSchedule();
+		try {
+			createSchedule();
+		} catch (ParameterNotFoundException e) {
+			LOGGER.log(Level.SEVERE, "Could not find a parameter required to create the schedule.", e);
+			return null;
+		}
+
+		// INSERT ROAD CLOSURE CODE HERE
+
+		// This array holds the unique identifiers for the roads that are going to be closed (these can be
+		// found by looking through the GIS data)
+		List<String> roadsToClose = Arrays.asList(new String[] { "4000000010901474", "4000000010901576",
+				"4000000010901602", "4000000010901475", "4000000010901753", "4000000010901834", "4000000010901836",
+				"4000000011243306", "4000000011255522", "4000000010901758", "4000000010901835", "4000000010901864",
+				"4000000010901750" });
+
+		// Iterate over all edges in the road network
+		for (RepastEdge e : ContextManager.roadNetwork.getEdges()) {
+			NetworkEdge edge = (NetworkEdge) e; // Cast to our own edge implementation
+			// See if the edge is one of the ones to be closed
+			try {
+				String roadID = edge.getRoad().getIdentifier();
+				if (roadsToClose.contains(roadID)) {
+					System.out.println("Increasing weight of road " + roadID);
+					edge.setWeight(100000);
+				}
+			} catch (NoIdentifierException e1) {
+				// This only happens if the a road in the input data doesn't have a unique value in the 'identifier'
+				// column
+				LOGGER.log(Level.SEVERE, "Internal error, could not find a road identifier.");
+			}
+		}
 
 		return mainContext;
+
+	} // end of build() function
+
+	/** This function runs through each building in the model and writes the number of burglaries */
+	public void outputBurglaryData() throws NoIdentifierException, IOException {
+		StringBuilder dataToWrite = new StringBuilder(); // Build a string so all data can be written at once.
+		dataToWrite.append("HouseIdentifier, NumBurglaries\n"); // This is the header for the csv file
+		// Now iterate over all the houses
+		for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
+			if (b.getType() == 1) { // Ignore buildings that aren't houses (type 1)
+				// Write the number of burglaries for this house
+				dataToWrite.append("'"+b.getIdentifier() + "', " + b.getNumBurglaries() + "\n");
+			} // if
+		} // for
+		// Now write this data to a file
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("results.csv")));
+		bw.write(dataToWrite.toString());
+		bw.close();
+		// And log the data as well so we can see it on the console.
+		LOGGER.info(dataToWrite.toString());
 	}
 
-
-	private void createSchedule() {
+	private void createSchedule() throws NumberFormatException, ParameterNotFoundException {
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
+		
+		// Schedule the outputBurglaryData() function to be called at the end of the simulation
+		ScheduleParameters params = ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY);
+		schedule.schedule(params, this, "outputBurglaryData");
+		
 
 		// Schedule something that outputs ticks every 1000 iterations.
 		schedule.schedule(ScheduleParameters.createRepeating(1, 1000, ScheduleParameters.LAST_PRIORITY), this,
 				"printTicks");
+
+		// Schedule a function that will stop the simulation after a number of ticks
+		int endTime = Integer.parseInt(ContextManager.getParameter("END_TIME").toString());
+		schedule.schedule(ScheduleParameters.createOneTime(endTime), this, "end");
 
 		/*
 		 * Schedule the agents. This is slightly complicated because if all the agents can be stepped at the same time
@@ -254,53 +320,37 @@ public class ContextManager implements ContextBuilder<Object> {
 			 */
 			LOGGER.log(Level.FINE, "The multi-threaded scheduler will be used.");
 			ThreadedAgentScheduler s = new ThreadedAgentScheduler();
-			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 0);
+			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 5);
 			schedule.schedule(agentStepParams, s, "agentStep");
 		} else { // Agents will execute in serial, use the repast scheduler.
 			LOGGER.log(Level.FINE, "The single-threaded scheduler will be used.");
-			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 0);
+			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 5);
 			// Schedule the agents' step methods.
 			for (IAgent a : agentContext.getObjects(IAgent.class)) {
 				schedule.schedule(agentStepParams, a, "step");
 			}
 		}
-		
-		// This is necessary to make sure that methods scheduled with annotations are called. 
+
+		// This is necessary to make sure that methods scheduled with annotations are called.
 		schedule.schedule(this);
-		
-		// INSERT ROAD CLOSURE CODE HERE
-		
-		// This array holds the unique identifiers for the roads that are going to be closed (these can be
-		// found by looking through the GIS data)
-		List<String> roadsToClose = Arrays.asList(new String[]{"4000000010901474", "4000000010901576", 
-				"4000000010901602", "4000000010901475", "4000000010901753", "4000000010901834", "4000000010901836", 
-				"4000000011243306", "4000000011255522", "4000000010901758", "4000000010901835", "4000000010901864", 
-				"4000000010901750" });
-		
-		// Iterate over all edges in the road network
-		for (RepastEdge e:ContextManager.roadNetwork.getEdges()) {
-			NetworkEdge edge = (NetworkEdge) e; // Cast to our own edge implementation 
-			// See if the edge is one of the ones to be closed
-			try {
-				String roadID = edge.getRoad().getIdentifier();
-				if (roadsToClose.contains(roadID)) {
-					System.out.println("Increasing weight of road "+roadID);
-					edge.setWeight(100000);
-				}
-			} catch (NoIdentifierException e1) {
-				// This only happens if the a road in the input data doesn't have a unique value in the 'identifier' column
-				LOGGER.log(Level.SEVERE, "Internal error, could not find a road identifier.");
-			}
-		}
 
-	} // end of build() function
+	}
 
-	private static long speedTimer = -1; // For recording time per N iterations 
+	private static long speedTimer = -1; // For recording time per N iterations
+
 	public void printTicks() {
-		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+
-				". Speed: "+((double)(System.currentTimeMillis()-ContextManager.speedTimer)/1000.0)+
-				"sec/ticks.");
+		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount() + ". Speed: "
+				+ ((double) (System.currentTimeMillis() - ContextManager.speedTimer) / 1000.0) + "sec/ticks.");
 		ContextManager.speedTimer = System.currentTimeMillis();
+	}
+
+	/* Function that is scheduled to stop the simulation */
+	public void end() {
+		LOGGER.info("Simulation is ending after: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount()
+				+ " iterations / " + ContextManager.numberOfDays + " days.");
+		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
+		schedule.setFinishing(true);
+		schedule.executeEndActions();
 	}
 
 	/**
@@ -506,6 +556,12 @@ public class ContextManager implements ContextBuilder<Object> {
 		}
 	}
 
+	/**
+	 * Other objects can call this to stop the simulation if an error has occurred.
+	 * 
+	 * @param ex
+	 * @param clazz
+	 */
 	public static void stopSim(Exception ex, Class<?> clazz) {
 		ISchedule sched = RunEnvironment.getInstance().getCurrentSchedule();
 		sched.setFinishing(true);
@@ -602,22 +658,24 @@ public class ContextManager implements ContextBuilder<Object> {
 	public static Geography<IAgent> getAgentGeography() {
 		return ContextManager.agentGeography;
 	}
-	
-	/* A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
-	 * iteration, to update the variable. */
+
+	/*
+	 * A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
+	 * iteration, to update the variable.
+	 */
 	public static double realTime = 8.0; // (start at 8am)
 	public static int numberOfDays = 0; // It is also useful to count the number of days.
-	
-	@ScheduledMethod(start=1, interval=2)
+
+	@ScheduledMethod(start = 1, interval = 1, priority=10)
 	public void updateRealTime() {
-		realTime += (1.0/60.0); // Increase the time by one minute (a 60th of an hour)
-		
+//		System.out.println("Time: "+RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+", "+realTime);
+		realTime += (1.0 / 60.0); // Increase the time by one minute (a 60th of an hour)
+
 		if (realTime >= 24.0) { // If it's the end of a day then reset the time
 			realTime = 0.0;
 			numberOfDays++; // Also increment our day counter
-			LOGGER.log(Level.INFO, "Simulating day "+numberOfDays);
+			LOGGER.log(Level.INFO, "Simulating day " + numberOfDays);
 		}
 	}
-	
 
 }

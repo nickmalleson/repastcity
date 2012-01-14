@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.9: http://docutils.sourceforge.net/" />
-<title>RepastCity Tutorial</title>
+<title>RepastCity Criminal Bankers Tutorial</title>
 <style type="text/css">
 
 /*
@@ -314,8 +314,8 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document" id="repastcity-tutorial">
-<h1 class="title">RepastCity Tutorial</h1>
+<div class="document" id="repastcity-criminal-bankers-tutorial">
+<h1 class="title">RepastCity <cite>Criminal Bankers</cite> Tutorial</h1>
 
 <div class="section" id="introduction">
 <h1>Introduction</h1>
@@ -328,14 +328,24 @@ ul.auto-toc {
 <li>Further update the agents' behaviour so that they randomly commit burglary if they pass a suitable house while they are travelling.</li>
 <li>Remove a few key roads from the road network to see what affect this will have on patterns of burglary.</li>
 </ol>
+<p>This tutorial assumes that the reader understands Java programming and has used Repast Simphony (Java) before. The Repast <a class="reference external" href="http://repast.sourceforge.net/docs.html">documentation</a> page has numerous tutorials and the <a class="reference external" href="http://repast.sourceforge.net/docs/RepastJavaGettingStarted.pdf">Getting Started (Java)</a> tutorial is particularly relevant.</p>
 </div>
 <div class="section" id="gis-data-york">
 <h1>GIS Data - York</h1>
-<p>The data for the tutorial cover part of the city of York. It is real GIS data produced by <a class="reference external" href="http://www.ordnancesurvey.co.uk/oswebsite/products/os-mastermap/index.html">Ordnance Survey</a> but, for the sake of this tutorial, the data have been cut down by removing a large number of the houses and roads. The image below illustrates the study area; agents live in a suburban area towards thenorth of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.</p>
+<p>The data for the tutorial cover part of the city of York. It is real GIS data produced by <a class="reference external" href="http://www.ordnancesurvey.co.uk/oswebsite/products/os-mastermap/index.html">Ordnance Survey</a> but, for the sake of this tutorial, the data have been cut down by removing a large number of the houses and roads. The image below illustrates the study area; agents live in a suburban area towards the north of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.</p>
 <img alt="figures/york_data.jpg" src="figures/york_data.jpg" />
 </div>
-<div class="section" id="loading-the-tutorial">
-<h1>Loading the Tutorial</h1>
+<div class="section" id="model-organisation">
+<h1>Model Organisation</h1>
+<p>Before starting the tutorial it is helpful to understand how Repast Simphony models are organised. In particular, agents are organised into collections called <strong>Contexts</strong>. A context is basically a bucket that can be used to hold agents. Contexts are arranged hierarchically and can contain sub-contexts. Agents who exist in a sub-context also exist in the parent context, but the reverse is not necessarily true. For example, in a <em>School</em> context there might be <em>Teacher</em> and <em>Student</em> sub-contexts (and even further <em>Class</em> sub-contexts).</p>
+<p><strong>Projections</strong> are used to give the agents a space and can define their relationships. For example, 'GIS' projections gives each agent an (x, y) spatial location and 'Network' projections allow relationships between agents to be defined (e.g. a social network). Projections are created for specific contexts and will automatically contain every agent within the context (so if an agent is added to a context it is also added to any projections which have been created on that context).</p>
+<p>The figure below illustrates the organisation of the RepastCity model. Each context has an associated GIS projection to store the spatial locations of the objects.</p>
+<img alt="figures/contexts_projections.png" src="figures/contexts_projections.png" />
+<p>The <em>JunctionContext</em> is at the central means of routing agents. A Junction object is defined as the point at which two roads cross (e.g. an intersection). Therefore the <em>JunctionGeogaraphy</em> GIS projection is used to hold the locations of all the road intersections, and <em>RoadNetwork</em> is a network projection that contains the links between different junctions. Hence agents use the network to work out how to move from one place to another along the road network.</p>
+<p>A fuller description of the routing algorithm itself is available on the <a class="reference external" href="http://crimesim.blogspot.com/2008/05/using-repast-to-move-agents-along-road.html">crimesim blog</a>.</p>
+</div>
+<div class="section" id="loading-the-tutorial-and-the-repast-gui">
+<h1>Loading the Tutorial and the Repast GUI</h1>
 <p>XXXX - where to find the tutorial code and load it into Repast.</p>
 <p>XXXX - click on the down arrow to show the different components.</p>
 <img alt="figures/run_button.tiff" src="figures/run_button.tiff" />
@@ -353,7 +363,7 @@ ul.auto-toc {
 <p>Once openning the file, your display should look similar to this:</p>
 <img alt="figures/agent_step.jpg" src="figures/agent_step.jpg" />
 <p>The task for this stage is to find a bank for the agents to work in and set their <cite>workplace</cite> variable accordingly. The <tt class="docutils literal">ContextManager</tt> class is responsible for creating agents and generally configuring the simulation and it is this class that ensures each agent has a home. We will see how this class works later, but in the meantime we will add some code to the agent's default constructor to set their <tt class="docutils literal">workplace</tt> variable.</p>
-<p>Repast Simphony organises objects into collections called <em>Contexts</em>. The model works by reading all buildings in the GIS data and adding them into their own context called <tt class="docutils literal">buildingContext</tt>. So, to find a bank we need to iterate over all buildings in the model until we find a bank, then tell the agent that the building we have just found is where they will work. To do this, find the constructure near the top of the <tt class="docutils literal">DefatultAgent</tt> source file and replace the text that is there already:</p>
+<p>Repast Simphony organises objects into collections called <em>Contexts</em>. The model works by reading all buildings in the GIS data and adding them into their own context called <tt class="docutils literal">buildingContext</tt>. So, to find a bank we need to iterate over all buildings in the model until we find a bank, then tell the agent that the building we have just found is where they will work. To do this, find the constructor near the top of the <tt class="docutils literal">DefatultAgent</tt> source file and replace the text that is there already:</p>
 <pre class="literal-block">
 public DefaultAgent() {
         this.id = uniqueID++;
@@ -383,12 +393,12 @@ RunEnvironment.getInstance().getCurrentSchedule().getTickCount();
 </pre>
 <p>However, we want a way for our agents to know what the real time is, in hours and minutes. To do this we can add some code to the <tt class="docutils literal">ContextManager</tt> class which will maintain a <tt class="docutils literal">realTime</tt> variable. This variable will be <tt class="docutils literal">public</tt> so that other classes can access it and we will also create a method that updates the value of the timer at each iteration. To do this, open the <tt class="docutils literal">ContextManager</tt> source file which is part of the <tt class="docutils literal">repastcity3.main</tt> package. The following code can be added anywhere inside the class, but lets put it at the bottom of the source file (after the <tt class="docutils literal">getAgentGeography()</tt> method but before the very last closing brace):</p>
 <pre class="literal-block">
-/* A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
+/* Variables to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a method, called at every
  * iteration, to update the variable. */
 public static double realTime = 8.0; // (start at 8am)
 public static int numberOfDays = 0; // It is also useful to count the number of days.
 
-&#64;ScheduledMethod(start=1, interval=2)
+&#64;ScheduledMethod(start=1, interval=1, priority=10)
 public void updateRealTime() {
         realTime += (1.0/60.0); // Increase the time by one minute (a 60th of an hour)
         if (realTime &gt;= 24.0) { // If it's the end of a day then reset the time
@@ -398,12 +408,17 @@ public void updateRealTime() {
         }
 }
 </pre>
+<p>The <tt class="docutils literal">updateRealTime()</tt> method itself should be fairly self explanatory but line:</p>
+<pre class="literal-block">
+&#64;ScheduledMethod(start=1, interval=1)
+</pre>
+<p>might be unfamiliar. This is a way of scheduling a function in Repast using <em>Java annotations</em>. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called, but annotations are nice because they are simple and they appear close to the code that is being scheduled. See the <a class="reference external" href="http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html">scheduling documentation</a> for more information.</p>
 <p>After these changes, the end of your <tt class="docutils literal">ContextManager</tt> class should look something like the image below.</p>
 <img alt="figures/timer_code.jpg" src="figures/timer_code.jpg" />
 </div>
 <div class="section" id="making-the-agents-work">
 <h1>Making the Agents Work</h1>
-<p>Now that we have a clock it is possible to change the agents' beahviour so that they go to work at 9am and then go home again at 5pm. Open the <tt class="docutils literal">DefaultAgent</tt> class again and find the <tt class="docutils literal">step()</tt> method. This method was scheduled in the <tt class="docutils literal">ContextManager</tt> code to be called at each iteration. (If you choose to look at how this is done in <tt class="docutils literal">ContextManager</tt> you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).</p>
+<p>Now that we have a clock it is possible to change the agents' behaviour so that they go to work at 9am and then go home again at 5pm. Open the <tt class="docutils literal">DefaultAgent</tt> class again and find the <tt class="docutils literal">step()</tt> method. This method was scheduled in the <tt class="docutils literal">ContextManager</tt> code to be called at each iteration. (If you choose to look at how this is done in <tt class="docutils literal">ContextManager</tt> you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).</p>
 <p>At the moment, the code in the agents' <tt class="docutils literal">step()</tt> method simply makes the agent travel from home to a randomly chosen building and back again forever. The first thing to do is either delete or comment-out all of the code in the <tt class="docutils literal">DefaultBurglar.step()</tt> method. Then add the following to make them go to work between at 9am and home at 5pm:</p>
 <pre class="literal-block">
 // See what the time is, this will determine what the agent should be doing. The BigDecimal stuff
@@ -433,21 +448,116 @@ else {
 </div>
 <div class="section" id="topping-up-their-bonuses-with-burglary">
 <h1>Topping Up their Bonuses with Burglary</h1>
+<p>In these tough economic times, our banker agents have been hit harder than others and decide to resort to burglary to supplement their meagre bonuses. There are a huge number of factors that could be used to realistically model burglary, but in this simple application the agents will just examine each house that they pass and throw a dice to decide whether or not to burgle.</p>
+<p>We will add this functionality immediately after the agent has finished travelling. So, open <tt class="docutils literal">DefaultAgent</tt> and find the <tt class="docutils literal">step()</tt> method that we edited earlier. Then, immediately after the <tt class="docutils literal">this.route.travel()</tt> command, add the following:</p>
+<pre class="literal-block">
+for (Building b : this.route.getPassedBuildings()) {
+        if (b.getType() == 1) { // Only burgle houses (not banks too)
+                // Roll a dice to see if this house should be burgled (1 in 100 chance)
+                double random;
+                synchronized (ContextManager.randomLock) {
+                        // This synchronized block ensures that only one agent at a time can access RandomHelper
+                        random = RandomHelper.nextDouble();
+                }
+                if (random &gt;= 0.99) {
+                        b.burgled(); // Tell the building that it has been burgled
+                        LOGGER.log(Level.FINE, &quot;Agent &quot; + this.toString() + &quot; has burgled building &quot;
+                                        + b.getIdentifier() + &quot;Total: &quot; + b.getNumBurglaries() + &quot;. Random value: &quot; + random);
+                }
+        }
+} // for passed buildings
+</pre>
+<p>The <tt class="docutils literal">Route</tt> object allows the agents to retrieve a list of all the buildings that they passed the last time they travelled (<tt class="docutils literal">route.getPassedBuildings()</tt>). So, the above code (which is called each time an agent moves) loops through all the buildings they have just passed, checks if they are houses, and has a 1% change of burgling each house. Note that the <tt class="docutils literal">RandomHelper</tt> class is used to generate the random number. This is a Simphony class and means that if we configure the random number generation properly it should be possible to make a simulation repeatable. We need to make the <tt class="docutils literal">random = <span class="pre">RandomHelper.nextDouble();</span></tt> in a <tt class="docutils literal">synchronized</tt> block to make sure that two agents don't try to get a random number at the same time (for some reason Simphony doesn't like this!).</p>
+<p>Afterwards, the whole <tt class="docutils literal">step()</tt> function should look like this:</p>
+<pre class="literal-block">
+public void step() throws Exception {
+
+        // See what the time is, this will determine what the agent should be doing. The BigDecimal stuff
+        // is just to round the time to 5 decimal places, otherwise it will never be exactly 9.0 or 17.0.
+        double theTime = BigDecimal.valueOf(ContextManager.realTime).round(new MathContext(5, RoundingMode.HALF_UP))
+                        .doubleValue();
+
+        if (theTime == 9.0) { // 9am, Agent should be working
+                this.route = new Route(this, this.workplace.getCoords(), this.workplace); // Create a route to work
+        } else if (theTime == 17.0) { // 5pm, agent should go home
+                this.route = new Route(this, this.home.getCoords(), this.home); // Create a route home
+        }
+
+        if (this.route == null) {
+                // Don't do anything if a route hasn't been created.
+        } else if (this.route.atDestination()) {
+                // Have reached our destination, lets delete the old route (more efficient).
+                this.route = null;
+        } else {
+                // Otherwise travel towards the destination
+                this.route.travel();
+                for (Building b : this.route.getPassedBuildings()) {
+                        if (b.getType() == 1) { // Only burgle houses (not banks too)
+                                // Roll a dice to see if this house should be burgled (1 in 100 chance)
+                                double random;
+                                synchronized (ContextManager.randomLock) {
+                                        // This synchronized block ensures that only one agent at a time can access RandomHelper
+                                        random = RandomHelper.nextDouble();
+                                }
+                                if (random &gt;= 0.99) {
+                                        b.burgled(); // Tell the building that it has been burgled
+                                        LOGGER.log(Level.FINE, &quot;Agent &quot; + this.toString() + &quot; has burgled building &quot;
+                                                        + b.getIdentifier() + &quot;Total: &quot; + b.getNumBurglaries() + &quot;. Random value: &quot; + random);
+                                }
+                        }
+                } // for passed buildings
+        } // else
+} // step()
+</pre>
 </div>
 <div class="section" id="getting-some-results">
 <h1>Getting Some Results</h1>
+<p>Repast Simphony has an inbuilt mechanism that uses <em>Data Sets</em> to collect information about the agents and <em>Outputters</em> to export the data to files etc. Outputters and Data Sets are created on a particular context (e.g. the <em>AgentContext</em>) using the Repast GUI. For more information, there are Simphony tutorials about <a class="reference external" href="http://repast.sourceforge.net/docs/reference/SIM/Using%20the%20DataSet%20Wizard%20and%20Editor.html">data sets</a> and <a class="reference external" href="http://repast.sourceforge.net/docs/tutorial/SIM/2-07%20File%20Outputters.html">outputters</a>.</p>
+<p>For this tutorial, however, we will write our own small function that collects the number of burglaries in each house at the end of the simulation and writes it out to a csv file. To do this, open the <tt class="docutils literal">ContextManager</tt> class and create a function called <tt class="docutils literal">outputBurglaryData</tt>. It doesn't matter where the code actually goes, but for clarity somewhere after the <tt class="docutils literal">build()</tt> function and before the start of <tt class="docutils literal">createSchedule()</tt>. Add the following code:</p>
+<pre class="literal-block">
+/** This function runs through each building in the model and writes the number of burglaries */
+public void outputBurglaryData() throws NoIdentifierException, IOException {
+        StringBuilder dataToWrite = new StringBuilder(); // Build a string so all data can be written at once.
+        dataToWrite.append(&quot;HouseIdentifier, NumBurglaries\n&quot;); // This is the header for the csv file
+        // Now iterate over all the houses
+        for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
+                if (b.getType() == 1) { // Ignore buildings that aren't houses (type 1)
+                        // Write the number of burglaries for this house
+                        dataToWrite.append(b.getIdentifier() + &quot;, &quot; + b.getNumBurglaries() + &quot;\n&quot;);
+                } // if
+        } // for
+        // Now write this data to a file
+        BufferedWriter bw = new BufferedWriter(new FileWriter(new File(&quot;results.csv&quot;)));
+        bw.write(dataToWrite.toString());
+        bw.close();
+        // And log the data as well so we can see it on the console.
+        LOGGER.info(dataToWrite.toString());
+}
+</pre>
+<p>Finally, we need to schedule the function to be called when the simulation finishes. Unlike the <tt class="docutils literal">updateRealTime()</tt> method that we scheduler earlier, <tt class="docutils literal">outputBurglaryData()</tt> cannot be scheduled with annotations because we don't know, at compile time, when the simulation will finish. So we have to schedule the method manually. To do this, first find the <tt class="docutils literal">createSchedule()</tt> method. The first line of the function should be:</p>
+<pre class="literal-block">
+ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
+</pre>
+<p>This gets the current schedule object. We can now tell the scheduler to call our new function with the simulation finishes by adding this just below the <tt class="docutils literal">ISchedule</tt> line:</p>
+<pre class="literal-block">
+// Schedule the outputBurglaryData() function to be called at the end of the simulation
+ScheduleParameters params = ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY);
+schedule.schedule(params, this, &quot;outputBurglaryData&quot;);
+</pre>
+<p>The first line creates a <tt class="docutils literal">ScheduleParameters</tt> object to tell the scheduler when the function should be called - at the end of the simulation and, if there are lots of functions called simultaneously, it should be the last one. Then the second line tells the scheduler to use those parameters to schedule a function called <tt class="docutils literal">outputBurglaryData</tt>. The <tt class="docutils literal">this</tt> argument tells the scheduler which class the method could be found in; if we wanted to schedule a method in another class we could pass a different object here.</p>
+<p>After implementing these changes you can run the model again and should see a load of house information printed at the end of the simulation. A file called <cite>results.csv</cite> will also be created in the root project directory. This file can be joined to the original spatial data using a GIS to explore the burglary patterns (there will be an example of this later).</p>
 </div>
 <div class="section" id="austerity-road-closures">
 <h1>Austerity Road Closures</h1>
-<p>In these times of austerity, the Council have decided that they need to close some roads to save money. They have identified the main road linking our bankers' suburb with the city centre as a good one to close, so in this section we will implement this change. In Repast Simphony, relationships between objects can be represented by a <tt class="docutils literal">NetworkProjection</tt>. These are commonly used to represent social networks but can also be used to build a road network by defining which roads are linked to each other. A <em>node</em> in the network represents an intersection (the juntion where two roads meet) and <em>edges</em> in the network represent the roads themselves. Each edge has a weight which, in this case, is the length of the road section between two intersections. Therefore when the <tt class="docutils literal">Route</tt> class builds a route for an agent it uses the network to find the shortest path. For more information about routing, have a look <a class="reference external" href="http://crimesim.blogspot.com/2008/05/using-repast-to-move-agents-along-road.html">here</a>.</p>
-<p>To implement the change, we will add some code to the <tt class="docutils literal">ContextManager</tt> class to:</p>
+<p>In these times of austerity, the Council have decided that they need to close some roads to save money. They have identified the main road linking our bankers' suburb with the city centre as a good one to close, so in this section we will implement this change. Recall that, in Repast Simphony, relationships between objects can be represented by a <tt class="docutils literal">NetworkProjection</tt>. These are commonly used to represent social networks but can also be used to build a road network by defining which roads are linked to each other. A <em>node</em> in the network represents an intersection (the junction where two roads meet) and <em>edges</em> in the network represent the roads themselves. Each edge has a weight which, in this case, is the length of the road section between two intersections. Therefore when the <tt class="docutils literal">Route</tt> class builds a route for an agent it uses the network to find the shortest path.</p>
+<p>To implement the road closures, we will add some code to the <tt class="docutils literal">ContextManager</tt> class to:</p>
 <ol class="arabic simple">
 <li>look through all the roads</li>
 <li>find the ones that are to be closed</li>
 <li>increase their weight value so that it looks like they are incredibly long.</li>
 </ol>
 <p>Afterwards the <tt class="docutils literal">Route</tt> class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.</p>
-<p>Open the <tt class="docutils literal">ContextManager</tt> class (in the <tt class="docutils literal">repastcity3.main</tt> package) if it is not open already, find the <tt class="docutils literal">build()</tt> method and scroll down to the end (near line number 260). Then insert this code directly after the '<tt class="docutils literal">schedule.schedule(this);</tt>' line (the code will be explained in more detail below):</p>
+<p>Open the <tt class="docutils literal">ContextManager</tt> class (in the <tt class="docutils literal">repastcity3.main</tt> package) if it is not open already, find the <tt class="docutils literal">build()</tt> method and scroll down to the end (near line number 260). Then insert this code directly after the '<tt class="docutils literal">// INSERT ROAD CLOSURE CODE HERE</tt>' line (the code will be explained in more detail below):</p>
 <pre class="literal-block">
 // This array holds the unique identifiers for the roads that are going to be closed (these can be
 // found by looking through the GIS data)
@@ -488,12 +598,17 @@ String roadID = edge.getRoad().getIdentifier();
 <p>Finally, if the road identifier matches one of the ID's of the roads that we want to close, simply increase the weight of the road so that it will never be used when the agents create new routes:</p>
 <pre class="literal-block">
 if (roadsToClose.contains(roadID)) {
-        System.out.println(&quot;Increasing weight of road &quot;+roadID);
         edge.setWeight(100000);
 }
 </pre>
 <p>Once you have finished adding the new code, the <tt class="docutils literal">ContextManager</tt> class should look similar to below:</p>
+<p>XXXX - redo image</p>
 <img alt="figures/road_closure_code.jpg" src="figures/road_closure_code.jpg" />
+</div>
+<div class="section" id="where-do-the-burgle-now">
+<h1>Where do the burgle now?</h1>
+<p>Using a GIS, it is possible to save the burglary results from before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates.</p>
+<img alt="figures/bankers_results.jpg" src="figures/bankers_results.jpg" />
 </div>
 <div class="section" id="conclusion">
 <h1>Conclusion</h1>
