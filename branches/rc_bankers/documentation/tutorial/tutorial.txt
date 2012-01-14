@@ -291,7 +291,8 @@ To implement the road closures, we will add some code to the ``ContextManager`` 
 
 Afterwards the ``Route`` class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.
 
-Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 230). Then insert this code directly after the '``// INSERT ROAD CLOSURE CODE HERE``' line (the code will be explained in more detail below)::
+Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 230). Then insert this code directly after the '``// INSERT ROAD CLOSURE CODE HERE``' 
+(the code will be explained in more detail below)::
 
 	// This array holds the unique identifiers for the roads that are going to be closed (these can be
 	// found by looking through the GIS data)
