@@ -291,7 +291,7 @@ To implement the road closures, we will add some code to the ``ContextManager`` 
 
 Afterwards the ``Route`` class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.
 
-Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 260). Then insert this code directly after the '``// INSERT ROAD CLOSURE CODE HERE``' line (the code will be explained in more detail below)::
+Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 230). Then insert this code directly after the '``// INSERT ROAD CLOSURE CODE HERE``' line (the code will be explained in more detail below)::
 
 	// This array holds the unique identifiers for the roads that are going to be closed (these can be
 	// found by looking through the GIS data)
@@ -338,32 +338,18 @@ Finally, if the road identifier matches one of the ID's of the roads that we wan
 
 Once you have finished adding the new code, the ``ContextManager`` class should look similar to below:
 
-XXXX - redo image
-
 .. image:: figures/road_closure_code.jpg
-
 
 
 Where do the burgle now?
 ========================
 
-Using a GIS, it is possible to save the burglary results from before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates.
+Using a GIS, it is possible to save the burglary results from before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.
+
+Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world, patterns that could not have been entirely predicted through our intuition alone.
 
 .. image:: figures/bankers_results.jpg
 
-
-Conclusion
-==========
-
-
-
-Other Useful Repast Features
-============================
-
-Automatically Creating Objects from Shapefiles
-----------------------------------------------
-
-XXXX - how ShapefileLoad looks for get/set methods and associated variables in the GIS features.
 
 
 
