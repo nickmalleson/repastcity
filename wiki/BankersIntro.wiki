@@ -42,12 +42,12 @@ That's enough of an introduction, now go to the next page to [BankersLoading loa
 
 For reference, here's a table of contents for the tutorial:
 
-# BankersIntro - this page.
-# BankersLoading - how to load the tutorial.
-# BankersFindWork - assigning the agents places to work.
-# BankersClock - implementing a clock so that the agents know what the time is.
-# BankersMakeWork - changing the behaviour so that the agents work between 9am and 5pm.
-# BankersBurglary - adding to their behaviour so that the agents start to burgle as well.
-# BankersResults - getting some results from the simulation (the number of burglaries per house in this case).
-# BankersRoadClosures - closing some roads to see how this will impact the travel behaviour of the bankers.
-# BankersFinalResults - getting some final results to compare burglary rates before and after the road closures.
+  # BankersIntro - this page.
+  # BankersLoading - how to load the tutorial.
+  # BankersFindWork - assigning the agents places to work.
+  # BankersClock - implementing a clock so that the agents know what the time is.
+  # BankersMakeWork - changing the behaviour so that the agents work between 9am and 5pm.
+  # BankersBurglary - adding to their behaviour so that the agents start to burgle as well.
+  # BankersResults - getting some results from the simulation (the number of burglaries per house in this case).
+  # BankersRoadClosures - closing some roads to see how this will impact the travel behaviour of the bankers.
+  # BankersFinalResults - getting some final results to compare burglary rates before and after the road closures.
