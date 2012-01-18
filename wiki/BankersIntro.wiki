@@ -31,7 +31,7 @@ Before starting the tutorial it is helpful to understand how Repast Simphony mod
 
 The figure below illustrates the organisation of the RepastCity model. Each context has an associated GIS projection to store the spatial locations of the objects.
 
-http://repastcity.googlecode.com/wiki/images/contexts_projections.png
+http://repastcity.googlecode.com/svn/wiki/images/contexts_projections.png
 
 The *JunctionContext* is at the central means of routing agents. A Junction object is defined as the point at which two roads cross (e.g. an intersection). Therefore the *JunctionGeogaraphy* GIS projection is used to hold the locations of all the road intersections, and *RoadNetwork* is a network projection that contains the links between different junctions. Hence agents use the network to work out how to move from one place to another along the road network.
 
