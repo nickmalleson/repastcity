@@ -21,6 +21,6 @@ To start the tutorial:
 
 http://repastcity.googlecode.com/svn/wiki/images/bankers/eclipse_start.jpg
 
-You will now be presented with the Repast Simphony GUI. This has all the controls for the simulation, such as starting or pausing it, changing parameters and adding displays. To initialise the simulation (read the GIS data and create the agents/environment) press the 'initialise' button and to start it press 'play' (These are indicated below). You should see the agents move around randomly from house to house; now we will start to improve their behaviour.
+You will now be presented with the Repast Simphony GUI. This has all the controls for the simulation, such as starting or pausing it, changing parameters and adding displays. To initialise the simulation (read the GIS data and create the agents/environment) press the 'initialise' button and to start it press 'play' (These are indicated below). You should see the agents move around randomly from house to house. In the next stage we will start to improve their behaviour by giving the agents [BankersFindWork somewhere to work].
 
 http://repastcity.googlecode.com/svn/wiki/images/bankers/repast_gui.jpg
