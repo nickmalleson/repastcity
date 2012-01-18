@@ -1,4 +1,4 @@
-#summary RepastCity Criminal Bankers Tutorial =
+#summary RepastCity Criminal Bankers Tutorial
 
 = RepastCity _Criminal Bankers_ Tutorial =
 
