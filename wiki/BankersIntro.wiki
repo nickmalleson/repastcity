@@ -54,8 +54,11 @@ To start the tutorial:
   # To make sure the project is displayed properly, you need to change to the 'Java perspective' by clicking on the top-right button (circled on the image below). This changes how Eclipse windows and buttons behave; by default you start in 'ReLogo' mode which is for models written in Repast's version of the Logo language (which, by the way, is very good, it's worth doing the [http://repast.sourceforge.net/docs/ReLogoGettingStarted.pdf ReLogo Tutorial] if you have a spare hour).
   # Finally we can run the model by clicking on the down arrow next to the green button (circled on the image below) and choosing 'Run Bankers Model'
 
+http://repastcity.googlecode.com/svn/wiki/images/eclipse_start.jpg
 
 You will now be presented with the Repast Simphony GUI. This has all the controls for the simulation, such as starting or pausing it, changing parameters and adding displays. To initialise the simulation (read the GIS data and create the agents/environment) press the 'initialise' button and to start it press 'play' (These are indicated below). You should see the agents move around randomly from house to house; now we will start to improve their behaviour.
+
+http://repastcity.googlecode.com/svn/wiki/images/repast_gui.jpg
 
 = Giving Agents Somewhere to Work =
 
@@ -66,6 +69,7 @@ In the basic model, agents are instances of the `DefaultAgent` class which lives
   # Open the `DefaultAgent.java` class. It is possible to create a new class for our banker agents (called `Banker` for example) but for now we'll just keep the boring `DefaultAgent`.
   # Scroll down to find the `step()` method.
 
+http://repastcity.googlecode.com/svn/wiki/images/agent_step.jpg
 
 The task for this stage is to find a bank for the agents to work in and set their `workplace` variable accordingly. The `ContextManager` class is responsible for creating agents and generally configuring the simulation and it is this class that ensures each agent has a home. We will see how this class works later, but in the meantime we will add some code to the agent's default constructor to set their `workplace` variable.
 
@@ -139,6 +143,8 @@ The `updateRealTime()` method itself should be fairly self explanatory but line:
 needs some explanation. This is a way of scheduling a function in Repast using *Java annotations*. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called (more on this later), but annotations are nice because they are simple and they appear close to the code that is actually being scheduled. See the [http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html scheduling documentation] for more information.
 
 After these changes, the end of your `ContextManager` class should look something like the image below.
+
+http://repastcity.googlecode.com/svn/wiki/images/timer_code.jpg
 
 = Making the Agents Work =
 
@@ -359,8 +365,12 @@ Once you have finished adding the new code, the `ContextManager` class should lo
 
 Try running the model again and seeing what happens. You should see the bankers take a different route to work, now that their original route has been closed.
 
+http://repastcity.googlecode.com/svn/wiki/images/road_closure_code.jpg
+
 = Where do they burgle now? =
 
 Using a GIS, it is possible to save the burglary results produced before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.
 
 Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world patterns that could not have been entirely predicted through our intuition alone.
+
+http://repastcity.googlecode.com/svn/wiki/images/bankers_results.jpg
