@@ -21,7 +21,6 @@ This tutorial assumes that the reader understands Java programming and has used 
 
 The data for the tutorial cover part of the city of York. It is real GIS data produced by [http://www.ordnancesurvey.co.uk/oswebsite/products/os-mastermap/index.html Ordnance Survey] but, for the sake of this tutorial, the data have been cut down by removing a large number of the houses and roads. The image below illustrates the study area; agents live in a suburban area towards the north of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.
 
-
 http://repastcity.googlecode.com/svn/wiki/images/bankers/york_data.jpg
 
 = Model Organisation =
