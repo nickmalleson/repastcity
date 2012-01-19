@@ -1,4 +1,5 @@
 #summary RepastCity Criminal Bankers Tutorial
+#labels Featured
 
 = RepastCity _Criminal Bankers_ Tutorial =
 
