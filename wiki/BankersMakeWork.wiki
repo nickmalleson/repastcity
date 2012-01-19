@@ -31,6 +31,6 @@ else {
 }
 }}}
 
-Try running the model again and you should see the agents travel to the banking heartland of York and then home again in the evening after making an invaluable contribution to society.
+Now if you run the model again you should see the agents travel to the banking heartland of York and then home again in the evening after making an invaluable contribution to society. Note that, since we have changed the model source code, you have to restart Repast in order to run the new behaviour. To do this, close the Repast GUI and click on the green arrow in Eclipse to re-run the model.
 
 In the next section we will alter their behaviour in more [BankersBurglary mischievous ways].
