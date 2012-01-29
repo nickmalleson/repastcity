@@ -3,7 +3,7 @@
 
 = RepastCity _Criminal Bankers_ Tutorial =
 
-*IMPORTANT: This tutorial is specifically for students at the University of Leeds, and although the code is all open source you wont be able to get hold of the Ordnance Survey MasterMap data. I'm in the process of putting it into a repository so others can use it too and will update the tutorial with proper instructions when I've finished...*
+*IMPORTANT (29th Jan): This tutorial is specifically for students at the University of Leeds, and although the code is all open source you wont be able to get hold of the Ordnance Survey MasterMap data. I'm in the process of putting it into a repository so others can use it too and will update the tutorial with proper instructions when I've finished...*
 
 = Introduction =
 
