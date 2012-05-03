@@ -49,25 +49,42 @@ A fuller description of the routing algorithm itself is available on the `crimes
 Loading the Tutorial and the Repast GUI
 =======================================
 
-XXXX - where to find the tutorial code and load it into Repast.
+The tutorial is part of a larger project called RepastCity_ which is basically a re-design of my PhD burglary model. If you have an existing Repast Simphony installation (which is basically a plug-in for the Eclipse IDE) you can download the bankers tutorial from here_, unzip it and then import it with Eclipse using ''File -> Import -> General -> Existing Projects into Workspace''. However, for this tutorial I have created a pre-packed version of Eclipse with Repast Simphony and the bankers tutorial already loaded. It is available here::
 
-XXXX - click on the down arrow to show the different components.
+	N:\Earth&Environment\Geography\TransferArea\NickMalleson\RepastSimphony-2.0-beta.zip
 
-.. image:: figures/run_button.tiff
+.. _RepastCity: http://code.google.com/p/repastcity/
 
-XXXX - the Simphony GUI
+.. _here: http://code.google.com/p/repastcity/downloads/detail?name=repastcity_bankers.zip&can=2&q=
+
+To start the tutorial:
+
+1. Copy the ``RepastSimphony-2.0-beta.zip`` directory (above) to somewhere on your PC (the Desktop is fine). It's quite big (~400Mb) so this might take a few mins. I wouldn't copy it to your ``M:`` drive because it will probably use all of your quota.
+#. Extract the zip file, which should create a single new directory called ``RepastSimphony-2.0-beta/``
+#. Go into the ``RepastSimphony-2.0-beta/eclipse`` directory and run the ``eclipse.exe`` file. This will start Eclipse.
+#. You will be prompted to choose a workspace. Choose the ``RepastSimphony-2.0-beta/workspace`` (i.e. a subdirectory of the folder you just downloaded).
+#. Once Eclipse has finished loading you should see the something like the image below. The left window shows all the projects in your workspace (at the moment there is only ``repastcity_bankers``) and the right window will be where the Java code can be editted.
+#. To make sure the project is displayed properly, you need to change to the 'Java perspective' by clicking on the top-right button (circled on the image below). This changes how Eclipse windows and buttons behave; by default you start in 'ReLogo' mode which is for models written in Repast's version of the Logo language (which, by the way, is very good, it's worth doing the `ReLogo Tutorial`_ if you have a spare hour).
+#. Finally we can run the model by clicking on the down arrow next to the green button (circled on the image below) and choosing 'Run Bankers Model'
+
+.. _`ReLogo Tutorial`: http://repast.sourceforge.net/docs/ReLogoGettingStarted.pdf
+
+.. image:: figures/eclipse_start.jpg
+
+You will now be presented with the Repast Simphony GUI. This has all the controls for the simulation, such as starting or pausing it, changing parameters and adding displays. To initialise the simulation (read the GIS data and create the agents/environment) press the 'initialise' button and to start it press 'play' (These are indicated below). You should see the agents move around randomly from house to house; now we will start to improve their behaviour.
+
+.. image:: figures/repast_gui.jpg
+
 
 Giving Agents Somewhere to Work
 ===============================
 
 In the basic model, agents are instances of the ``DefaultAgent`` class which lives in the ``repastcity3.agent`` package. To make the first change to the agents, we need to open this source file:
 
-1. In the left hand window (the 'Package Explorer'), expand the *repastcity3* folder so that you can see the contents of the program
-#. Expand the ``repastcity3.agent`` package.
-#. Open the ``DefaultAgent.java`` class. It is possible to create a new class for our banker agents (called ``Banker`` for example) but for now we'll just keep the boring ``DefaultAgent`` class name.
+1. In the left hand window (the 'Package Explorer'), expand the *repastcity_bankers* folder so that you can see the contents of the model.
+#. Expand the ``src`` folder to see all the source files and then expand``repastcity3.agent`` package.
+#. Open the ``DefaultAgent.java`` class. It is possible to create a new class for our banker agents (called ``Banker`` for example) but for now we'll just keep the boring ``DefaultAgent``.
 #. Scroll down to find the ``step()`` method.
-
-Once openning the file, your display should look similar to this:
 
 .. image:: figures/agent_step.jpg
 
@@ -93,8 +110,15 @@ with the following::
 		}
 	}
 
-Now, when each agent is generated they will also be assigned a randomly-chosen workplace.
+This code is relatively easy to understand, except for the command::
 
+	ContextManager.buildingContext.getRandomObjects(Building.class, 10000)
+
+This returns an ``Iterable`` that can iterate over all the buildings in the ``buildingContext``. We need to pass in the argument ``Building.class`` because it is possible for a context to hold more than one type of object. For example, our building context could hold houses, schools, railway stations etc. The other argument (``10000``) defines the number of objects that we would like to return; there are fewer than 10,000 buildings in the model so we will get all of them. The Simphony JavaDoc_ explains these functions in more detail, but if you hold your mouse over the function in Eclipse you should also be able to see the documentation.
+
+.. _JavaDoc: http://repast.sourceforge.net/docs/api.zip
+
+Now, when each agent is generated they will also be assigned a randomly-chosen workplace.
 
 Implementing a clock
 ====================
@@ -124,7 +148,7 @@ The ``updateRealTime()`` method itself should be fairly self explanatory but lin
 
 	@ScheduledMethod(start=1, interval=1)
 
-might be unfamiliar. This is a way of scheduling a function in Repast using *Java annotations*. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called, but annotations are nice because they are simple and they appear close to the code that is being scheduled. See the `scheduling documentation`_ for more information.
+needs some explanation. This is a way of scheduling a function in Repast using *Java annotations*. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called (more on this later), but annotations are nice because they are simple and they appear close to the code that is actually being scheduled. See the `scheduling documentation`_ for more information.
 
 .. _`scheduling documentation`: http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html
 
@@ -136,7 +160,7 @@ After these changes, the end of your ``ContextManager`` class should look someth
 Making the Agents Work
 ======================
 
-Now that we have a clock it is possible to change the agents' behaviour so that they go to work at 9am and then go home again at 5pm. Open the ``DefaultAgent`` class again and find the ``step()`` method. This method was scheduled in the ``ContextManager`` code to be called at each iteration. (If you choose to look at how this is done in ``ContextManager`` you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).
+Now that we have a clock it is possible to change the agents' behaviour so that they go to work at 9am and then go home again at 5pm. Open the ``DefaultAgent`` class again and find the ``step()`` method. This method was scheduled in the ``ContextManager`` code to be called at each iteration. (If you choose to look at how this is done by the ``createSchedule()`` method in ``ContextManager`` you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).
 
 At the moment, the code in the agents' ``step()`` method simply makes the agent travel from home to a randomly chosen building and back again forever. The first thing to do is either delete or comment-out all of the code in the ``DefaultBurglar.step()`` method. Then add the following to make them go to work between at 9am and home at 5pm::
 
@@ -189,7 +213,7 @@ We will add this functionality immediately after the agent has finished travelli
 		}
 	} // for passed buildings
 
-The ``Route`` object allows the agents to retrieve a list of all the buildings that they passed the last time they travelled (``route.getPassedBuildings()``). So, the above code (which is called each time an agent moves) loops through all the buildings they have just passed, checks if they are houses, and has a 1% change of burgling each house. Note that the ``RandomHelper`` class is used to generate the random number. This is a Simphony class and means that if we configure the random number generation properly it should be possible to make a simulation repeatable. We need to make the ``random = RandomHelper.nextDouble();`` in a ``synchronized`` block to make sure that two agents don't try to get a random number at the same time (for some reason Simphony doesn't like this!).
+The ``Route`` object allows the agents to retrieve a list of all the buildings that they passed the last time they travelled (``route.getPassedBuildings()``). So, the above code (which is called each time an agent moves) loops through all the buildings they have just passed, checks if they are houses, and has a 1% change of burgling each house. Note that the ``RandomHelper`` class is used to generate the random number. This is a Simphony class and means that if we configure the random number generation properly it should be possible to make a simulation repeatable. We need to have the ``random = RandomHelper.nextDouble();`` call in a ``synchronized`` block to make sure that two agents don't try to get a random number at the same time (for some reason Simphony doesn't like this!).
 
 Afterwards, the whole ``step()`` function should look like this::
 
@@ -243,7 +267,7 @@ Repast Simphony has an inbuilt mechanism that uses *Data Sets* to collect inform
 .. _`data sets`: http://repast.sourceforge.net/docs/reference/SIM/Using%20the%20DataSet%20Wizard%20and%20Editor.html
 .. _outputters: http://repast.sourceforge.net/docs/tutorial/SIM/2-07%20File%20Outputters.html
 
-For this tutorial, however, we will write our own small function that collects the number of burglaries in each house at the end of the simulation and writes it out to a csv file. To do this, open the ``ContextManager`` class and create a function called ``outputBurglaryData``. It doesn't matter where the code actually goes, but for clarity somewhere after the ``build()`` function and before the start of ``createSchedule()``. Add the following code::
+For this tutorial, however, we will write our own small function that collects the number of burglaries in each house at the end of the simulation and writes it out to a csv file. To do this, open the ``ContextManager`` class and create a function called ``outputBurglaryData``. It doesn't matter where the code actually goes, but for clarity (and so that your screen will look like my images below) add it directly after the ``build()`` function and before the start of ``createSchedule()`` (around line 240). Add the following code::
 
 	/** This function runs through each building in the model and writes the number of burglaries */
 	public void outputBurglaryData() throws NoIdentifierException, IOException {
@@ -268,7 +292,7 @@ Finally, we need to schedule the function to be called when the simulation finis
 
 	ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
 
-This gets the current schedule object. We can now tell the scheduler to call our new function with the simulation finishes by adding this just below the ``ISchedule`` line::
+This gets the current schedule object. We can now tell the scheduler to call our new function when the simulation finishes by adding this just below the ``ISchedule`` line::
 
 	// Schedule the outputBurglaryData() function to be called at the end of the simulation
 	ScheduleParameters params = ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY);
@@ -276,7 +300,7 @@ This gets the current schedule object. We can now tell the scheduler to call our
 
 The first line creates a ``ScheduleParameters`` object to tell the scheduler when the function should be called - at the end of the simulation and, if there are lots of functions called simultaneously, it should be the last one. Then the second line tells the scheduler to use those parameters to schedule a function called ``outputBurglaryData``. The ``this`` argument tells the scheduler which class the method could be found in; if we wanted to schedule a method in another class we could pass a different object here.
 
-After implementing these changes you can run the model again and should see a load of house information printed at the end of the simulation. A file called `results.csv` will also be created in the root project directory. This file can be joined to the original spatial data using a GIS to explore the burglary patterns (there will be an example of this later).
+After implementing these changes you can run the model again and should see a load of house information printed at the end of the simulation. A file called `results.csv` will also be created in the root project directory (if you can't see this immediately right click on the 'repastcity_bankers' project folder and click on 'Refresh'). This file can be joined to the original spatial data using a GIS to explore the burglary patterns (there will be an example of this later).
 
 Austerity Road Closures
 =======================
@@ -289,7 +313,7 @@ To implement the road closures, we will add some code to the ``ContextManager`` 
 2. find the ones that are to be closed
 3. increase their weight value so that it looks like they are incredibly long.
 
-Afterwards the ``Route`` class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.
+Afterwards the ``Route`` class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data. This is probably a more sensible approach but, for the sake of this tutorial, we will manipulate the road weights because it demonstrates how to work with the road network.
 
 Open the ``ContextManager`` class (in the ``repastcity3.main`` package) if it is not open already, find the ``build()`` method and scroll down to the end (near line number 230). Then insert this code directly after the '``// INSERT ROAD CLOSURE CODE HERE``' 
 (the code will be explained in more detail below)::
@@ -341,13 +365,15 @@ Once you have finished adding the new code, the ``ContextManager`` class should 
 
 .. image:: figures/road_closure_code.jpg
 
+Try running the model again and seeing what happens. You should see the bankers take a different route to work, now that their original route has been closed.
 
-Where do the burgle now?
-========================
 
-Using a GIS, it is possible to save the burglary results from before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.
+Where do they burgle now?
+=========================
 
-Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world, patterns that could not have been entirely predicted through our intuition alone.
+Using a GIS, it is possible to save the burglary results produced before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.
+
+Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world patterns that could not have been entirely predicted through our intuition alone.
 
 .. image:: figures/bankers_results.jpg
 
