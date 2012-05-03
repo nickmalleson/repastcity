@@ -346,21 +346,33 @@ ul.auto-toc {
 </div>
 <div class="section" id="loading-the-tutorial-and-the-repast-gui">
 <h1>Loading the Tutorial and the Repast GUI</h1>
-<p>XXXX - where to find the tutorial code and load it into Repast.</p>
-<p>XXXX - click on the down arrow to show the different components.</p>
-<img alt="figures/run_button.tiff" src="figures/run_button.tiff" />
-<p>XXXX - the Simphony GUI</p>
+<p>The tutorial is part of a larger project called <a class="reference external" href="http://code.google.com/p/repastcity/">RepastCity</a> which is basically a re-design of my PhD burglary model. If you have an existing Repast Simphony installation (which is basically a plug-in for the Eclipse IDE) you can download the bankers tutorial from <a class="reference external" href="http://code.google.com/p/repastcity/downloads/detail?name=repastcity_bankers.zip&amp;can=2&amp;q=">here</a>, unzip it and then import it with Eclipse using ''File -&gt; Import -&gt; General -&gt; Existing Projects into Workspace''. However, for this tutorial I have created a pre-packed version of Eclipse with Repast Simphony and the bankers tutorial already loaded. It is available here:</p>
+<pre class="literal-block">
+N:\Earth&amp;Environment\Geography\TransferArea\NickMalleson\RepastSimphony-2.0-beta.zip
+</pre>
+<p>To start the tutorial:</p>
+<ol class="arabic simple">
+<li>Copy the <tt class="docutils literal"><span class="pre">RepastSimphony-2.0-beta.zip</span></tt> directory (above) to somewhere on your PC (the Desktop is fine). It's quite big (~400Mb) so this might take a few mins. I wouldn't copy it to your <tt class="docutils literal">M:</tt> drive because it will probably use all of your quota.</li>
+<li>Extract the zip file, which should create a single new directory called <tt class="docutils literal"><span class="pre">RepastSimphony-2.0-beta/</span></tt></li>
+<li>Go into the <tt class="docutils literal"><span class="pre">RepastSimphony-2.0-beta/eclipse</span></tt> directory and run the <tt class="docutils literal">eclipse.exe</tt> file. This will start Eclipse.</li>
+<li>You will be prompted to choose a workspace. Choose the <tt class="docutils literal"><span class="pre">RepastSimphony-2.0-beta/workspace</span></tt> (i.e. a subdirectory of the folder you just downloaded).</li>
+<li>Once Eclipse has finished loading you should see the something like the image below. The left window shows all the projects in your workspace (at the moment there is only <tt class="docutils literal">repastcity_bankers</tt>) and the right window will be where the Java code can be editted.</li>
+<li>To make sure the project is displayed properly, you need to change to the 'Java perspective' by clicking on the top-right button (circled on the image below). This changes how Eclipse windows and buttons behave; by default you start in 'ReLogo' mode which is for models written in Repast's version of the Logo language (which, by the way, is very good, it's worth doing the <a class="reference external" href="http://repast.sourceforge.net/docs/ReLogoGettingStarted.pdf">ReLogo Tutorial</a> if you have a spare hour).</li>
+<li>Finally we can run the model by clicking on the down arrow next to the green button (circled on the image below) and choosing 'Run Bankers Model'</li>
+</ol>
+<img alt="figures/eclipse_start.jpg" src="figures/eclipse_start.jpg" />
+<p>You will now be presented with the Repast Simphony GUI. This has all the controls for the simulation, such as starting or pausing it, changing parameters and adding displays. To initialise the simulation (read the GIS data and create the agents/environment) press the 'initialise' button and to start it press 'play' (These are indicated below). You should see the agents move around randomly from house to house; now we will start to improve their behaviour.</p>
+<img alt="figures/repast_gui.jpg" src="figures/repast_gui.jpg" />
 </div>
 <div class="section" id="giving-agents-somewhere-to-work">
 <h1>Giving Agents Somewhere to Work</h1>
 <p>In the basic model, agents are instances of the <tt class="docutils literal">DefaultAgent</tt> class which lives in the <tt class="docutils literal">repastcity3.agent</tt> package. To make the first change to the agents, we need to open this source file:</p>
 <ol class="arabic simple">
-<li>In the left hand window (the 'Package Explorer'), expand the <em>repastcity3</em> folder so that you can see the contents of the program</li>
-<li>Expand the <tt class="docutils literal">repastcity3.agent</tt> package.</li>
-<li>Open the <tt class="docutils literal">DefaultAgent.java</tt> class. It is possible to create a new class for our banker agents (called <tt class="docutils literal">Banker</tt> for example) but for now we'll just keep the boring <tt class="docutils literal">DefaultAgent</tt> class name.</li>
+<li>In the left hand window (the 'Package Explorer'), expand the <em>repastcity_bankers</em> folder so that you can see the contents of the model.</li>
+<li>Expand the <tt class="docutils literal">src</tt> folder to see all the source files and then expand``repastcity3.agent`` package.</li>
+<li>Open the <tt class="docutils literal">DefaultAgent.java</tt> class. It is possible to create a new class for our banker agents (called <tt class="docutils literal">Banker</tt> for example) but for now we'll just keep the boring <tt class="docutils literal">DefaultAgent</tt>.</li>
 <li>Scroll down to find the <tt class="docutils literal">step()</tt> method.</li>
 </ol>
-<p>Once openning the file, your display should look similar to this:</p>
 <img alt="figures/agent_step.jpg" src="figures/agent_step.jpg" />
 <p>The task for this stage is to find a bank for the agents to work in and set their <cite>workplace</cite> variable accordingly. The <tt class="docutils literal">ContextManager</tt> class is responsible for creating agents and generally configuring the simulation and it is this class that ensures each agent has a home. We will see how this class works later, but in the meantime we will add some code to the agent's default constructor to set their <tt class="docutils literal">workplace</tt> variable.</p>
 <p>Repast Simphony organises objects into collections called <em>Contexts</em>. The model works by reading all buildings in the GIS data and adding them into their own context called <tt class="docutils literal">buildingContext</tt>. So, to find a bank we need to iterate over all buildings in the model until we find a bank, then tell the agent that the building we have just found is where they will work. To do this, find the constructor near the top of the <tt class="docutils literal">DefatultAgent</tt> source file and replace the text that is there already:</p>
@@ -383,6 +395,11 @@ public DefaultAgent() {
         }
 }
 </pre>
+<p>This code is relatively easy to understand, except for the command:</p>
+<pre class="literal-block">
+ContextManager.buildingContext.getRandomObjects(Building.class, 10000)
+</pre>
+<p>This returns an <tt class="docutils literal">Iterable</tt> that can iterate over all the buildings in the <tt class="docutils literal">buildingContext</tt>. We need to pass in the argument <tt class="docutils literal">Building.class</tt> because it is possible for a context to hold more than one type of object. For example, our building context could hold houses, schools, railway stations etc. The other argument (<tt class="docutils literal">10000</tt>) defines the number of objects that we would like to return; there are fewer than 10,000 buildings in the model so we will get all of them. The Simphony <a class="reference external" href="http://repast.sourceforge.net/docs/api.zip">JavaDoc</a> explains these functions in more detail, but if you hold your mouse over the function in Eclipse you should also be able to see the documentation.</p>
 <p>Now, when each agent is generated they will also be assigned a randomly-chosen workplace.</p>
 </div>
 <div class="section" id="implementing-a-clock">
@@ -412,13 +429,13 @@ public void updateRealTime() {
 <pre class="literal-block">
 &#64;ScheduledMethod(start=1, interval=1)
 </pre>
-<p>might be unfamiliar. This is a way of scheduling a function in Repast using <em>Java annotations</em>. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called, but annotations are nice because they are simple and they appear close to the code that is being scheduled. See the <a class="reference external" href="http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html">scheduling documentation</a> for more information.</p>
+<p>needs some explanation. This is a way of scheduling a function in Repast using <em>Java annotations</em>. It tells the scheduler that we want the method to be called first at iteration 1, and then at every subsequent iteration. It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called (more on this later), but annotations are nice because they are simple and they appear close to the code that is actually being scheduled. See the <a class="reference external" href="http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html">scheduling documentation</a> for more information.</p>
 <p>After these changes, the end of your <tt class="docutils literal">ContextManager</tt> class should look something like the image below.</p>
 <img alt="figures/timer_code.jpg" src="figures/timer_code.jpg" />
 </div>
 <div class="section" id="making-the-agents-work">
 <h1>Making the Agents Work</h1>
-<p>Now that we have a clock it is possible to change the agents' behaviour so that they go to work at 9am and then go home again at 5pm. Open the <tt class="docutils literal">DefaultAgent</tt> class again and find the <tt class="docutils literal">step()</tt> method. This method was scheduled in the <tt class="docutils literal">ContextManager</tt> code to be called at each iteration. (If you choose to look at how this is done in <tt class="docutils literal">ContextManager</tt> you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).</p>
+<p>Now that we have a clock it is possible to change the agents' behaviour so that they go to work at 9am and then go home again at 5pm. Open the <tt class="docutils literal">DefaultAgent</tt> class again and find the <tt class="docutils literal">step()</tt> method. This method was scheduled in the <tt class="docutils literal">ContextManager</tt> code to be called at each iteration. (If you choose to look at how this is done by the <tt class="docutils literal">createSchedule()</tt> method in <tt class="docutils literal">ContextManager</tt> you'll notice that the scheduling method is much more complicated than that of our real time counter. This is because the agents are actually executed simultaneously in different threads which makes the simulation run much more quickly on multi-core computers).</p>
 <p>At the moment, the code in the agents' <tt class="docutils literal">step()</tt> method simply makes the agent travel from home to a randomly chosen building and back again forever. The first thing to do is either delete or comment-out all of the code in the <tt class="docutils literal">DefaultBurglar.step()</tt> method. Then add the following to make them go to work between at 9am and home at 5pm:</p>
 <pre class="literal-block">
 // See what the time is, this will determine what the agent should be doing. The BigDecimal stuff
@@ -467,7 +484,7 @@ for (Building b : this.route.getPassedBuildings()) {
         }
 } // for passed buildings
 </pre>
-<p>The <tt class="docutils literal">Route</tt> object allows the agents to retrieve a list of all the buildings that they passed the last time they travelled (<tt class="docutils literal">route.getPassedBuildings()</tt>). So, the above code (which is called each time an agent moves) loops through all the buildings they have just passed, checks if they are houses, and has a 1% change of burgling each house. Note that the <tt class="docutils literal">RandomHelper</tt> class is used to generate the random number. This is a Simphony class and means that if we configure the random number generation properly it should be possible to make a simulation repeatable. We need to make the <tt class="docutils literal">random = <span class="pre">RandomHelper.nextDouble();</span></tt> in a <tt class="docutils literal">synchronized</tt> block to make sure that two agents don't try to get a random number at the same time (for some reason Simphony doesn't like this!).</p>
+<p>The <tt class="docutils literal">Route</tt> object allows the agents to retrieve a list of all the buildings that they passed the last time they travelled (<tt class="docutils literal">route.getPassedBuildings()</tt>). So, the above code (which is called each time an agent moves) loops through all the buildings they have just passed, checks if they are houses, and has a 1% change of burgling each house. Note that the <tt class="docutils literal">RandomHelper</tt> class is used to generate the random number. This is a Simphony class and means that if we configure the random number generation properly it should be possible to make a simulation repeatable. We need to have the <tt class="docutils literal">random = <span class="pre">RandomHelper.nextDouble();</span></tt> call in a <tt class="docutils literal">synchronized</tt> block to make sure that two agents don't try to get a random number at the same time (for some reason Simphony doesn't like this!).</p>
 <p>Afterwards, the whole <tt class="docutils literal">step()</tt> function should look like this:</p>
 <pre class="literal-block">
 public void step() throws Exception {
@@ -513,7 +530,7 @@ public void step() throws Exception {
 <div class="section" id="getting-some-results">
 <h1>Getting Some Results</h1>
 <p>Repast Simphony has an inbuilt mechanism that uses <em>Data Sets</em> to collect information about the agents and <em>Outputters</em> to export the data to files etc. Outputters and Data Sets are created on a particular context (e.g. the <em>AgentContext</em>) using the Repast GUI. For more information, there are Simphony tutorials about <a class="reference external" href="http://repast.sourceforge.net/docs/reference/SIM/Using%20the%20DataSet%20Wizard%20and%20Editor.html">data sets</a> and <a class="reference external" href="http://repast.sourceforge.net/docs/tutorial/SIM/2-07%20File%20Outputters.html">outputters</a>.</p>
-<p>For this tutorial, however, we will write our own small function that collects the number of burglaries in each house at the end of the simulation and writes it out to a csv file. To do this, open the <tt class="docutils literal">ContextManager</tt> class and create a function called <tt class="docutils literal">outputBurglaryData</tt>. It doesn't matter where the code actually goes, but for clarity somewhere after the <tt class="docutils literal">build()</tt> function and before the start of <tt class="docutils literal">createSchedule()</tt>. Add the following code:</p>
+<p>For this tutorial, however, we will write our own small function that collects the number of burglaries in each house at the end of the simulation and writes it out to a csv file. To do this, open the <tt class="docutils literal">ContextManager</tt> class and create a function called <tt class="docutils literal">outputBurglaryData</tt>. It doesn't matter where the code actually goes, but for clarity (and so that your screen will look like my images below) add it directly after the <tt class="docutils literal">build()</tt> function and before the start of <tt class="docutils literal">createSchedule()</tt> (around line 240). Add the following code:</p>
 <pre class="literal-block">
 /** This function runs through each building in the model and writes the number of burglaries */
 public void outputBurglaryData() throws NoIdentifierException, IOException {
@@ -538,14 +555,14 @@ public void outputBurglaryData() throws NoIdentifierException, IOException {
 <pre class="literal-block">
 ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
 </pre>
-<p>This gets the current schedule object. We can now tell the scheduler to call our new function with the simulation finishes by adding this just below the <tt class="docutils literal">ISchedule</tt> line:</p>
+<p>This gets the current schedule object. We can now tell the scheduler to call our new function when the simulation finishes by adding this just below the <tt class="docutils literal">ISchedule</tt> line:</p>
 <pre class="literal-block">
 // Schedule the outputBurglaryData() function to be called at the end of the simulation
 ScheduleParameters params = ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY);
 schedule.schedule(params, this, &quot;outputBurglaryData&quot;);
 </pre>
 <p>The first line creates a <tt class="docutils literal">ScheduleParameters</tt> object to tell the scheduler when the function should be called - at the end of the simulation and, if there are lots of functions called simultaneously, it should be the last one. Then the second line tells the scheduler to use those parameters to schedule a function called <tt class="docutils literal">outputBurglaryData</tt>. The <tt class="docutils literal">this</tt> argument tells the scheduler which class the method could be found in; if we wanted to schedule a method in another class we could pass a different object here.</p>
-<p>After implementing these changes you can run the model again and should see a load of house information printed at the end of the simulation. A file called <cite>results.csv</cite> will also be created in the root project directory. This file can be joined to the original spatial data using a GIS to explore the burglary patterns (there will be an example of this later).</p>
+<p>After implementing these changes you can run the model again and should see a load of house information printed at the end of the simulation. A file called <cite>results.csv</cite> will also be created in the root project directory (if you can't see this immediately right click on the 'repastcity_bankers' project folder and click on 'Refresh'). This file can be joined to the original spatial data using a GIS to explore the burglary patterns (there will be an example of this later).</p>
 </div>
 <div class="section" id="austerity-road-closures">
 <h1>Austerity Road Closures</h1>
@@ -556,8 +573,9 @@ schedule.schedule(params, this, &quot;outputBurglaryData&quot;);
 <li>find the ones that are to be closed</li>
 <li>increase their weight value so that it looks like they are incredibly long.</li>
 </ol>
-<p>Afterwards the <tt class="docutils literal">Route</tt> class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data, but for the sake of this tutorial we will manipulate the road weights.</p>
-<p>Open the <tt class="docutils literal">ContextManager</tt> class (in the <tt class="docutils literal">repastcity3.main</tt> package) if it is not open already, find the <tt class="docutils literal">build()</tt> method and scroll down to the end (near line number 260). Then insert this code directly after the '<tt class="docutils literal">// INSERT ROAD CLOSURE CODE HERE</tt>' line (the code will be explained in more detail below):</p>
+<p>Afterwards the <tt class="docutils literal">Route</tt> class will stop using the closed roads in favour of a different route that appears shorter. Alternatively, we could also simply delete the roads from our input GIS data. This is probably a more sensible approach but, for the sake of this tutorial, we will manipulate the road weights because it demonstrates how to work with the road network.</p>
+<p>Open the <tt class="docutils literal">ContextManager</tt> class (in the <tt class="docutils literal">repastcity3.main</tt> package) if it is not open already, find the <tt class="docutils literal">build()</tt> method and scroll down to the end (near line number 230). Then insert this code directly after the '<tt class="docutils literal">// INSERT ROAD CLOSURE CODE HERE</tt>'
+(the code will be explained in more detail below):</p>
 <pre class="literal-block">
 // This array holds the unique identifiers for the roads that are going to be closed (these can be
 // found by looking through the GIS data)
@@ -603,11 +621,12 @@ if (roadsToClose.contains(roadID)) {
 </pre>
 <p>Once you have finished adding the new code, the <tt class="docutils literal">ContextManager</tt> class should look similar to below:</p>
 <img alt="figures/road_closure_code.jpg" src="figures/road_closure_code.jpg" />
+<p>Try running the model again and seeing what happens. You should see the bankers take a different route to work, now that their original route has been closed.</p>
 </div>
-<div class="section" id="where-do-the-burgle-now">
-<h1>Where do the burgle now?</h1>
-<p>Using a GIS, it is possible to save the burglary results from before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.</p>
-<p>Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world, patterns that could not have been entirely predicted through our intuition alone.</p>
+<div class="section" id="where-do-they-burgle-now">
+<h1>Where do they burgle now?</h1>
+<p>Using a GIS, it is possible to save the burglary results produced before and after the road closures and produce maps. The image below shows an example of this, using the Kernel Density Algorithm to generate density maps of the burglary rates. As we can see, once the agents have to start taking a different route to work the patterns of burglary change dramatically. Although we could have predicted some of the changes, there are others that are much less intuitive.</p>
+<p>Hopefully this result has has demonstrated some of the benefits of this type of modelling. Even with an extremely simple model we have been able to generate some interesting, real world patterns that could not have been entirely predicted through our intuition alone.</p>
 <img alt="figures/bankers_results.jpg" src="figures/bankers_results.jpg" />
 </div>
 </div>
