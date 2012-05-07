@@ -19,7 +19,7 @@ The code in the `step()` method might look cryptic, but it is reasonably easy to
 
 The task for this stage is to find a bank for the agents to work in and set their `workplace` variable accordingly. The `ContextManager` class is responsible for creating agents and generally configuring the simulation and it is this class that ensures each agent has a home. We will see how this class works later, but in the meantime we will add some code to the agent's default constructor to set their `workplace` variable.
 
-Repast Simphony organises objects into collections called *Contexts*. The model works by reading all buildings in the GIS data and adding them into their own context called `buildingContext`. So, to find a bank we need to iterate over all buildings in the model until we find a bank, then tell the agent that the building we have just found is where they will work. To do this, find the constructor near the top of the `DefatultAgent` source file and replace the text that is there already:
+Repast Simphony organises objects into collections called *Contexts*. The model works by reading all the buildings in the GIS data and adding them into their own context called `buildingContext`. So, to find a bank we need to iterate over all buildings in the model until we find a bank, then tell the agent that the building we have just found is where they will work. To do this, find the constructor near the top of the `DefatultAgent` source file and replace the text that is there already:
 
 {{{
 public DefaultAgent() {
