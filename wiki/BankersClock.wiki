@@ -27,13 +27,13 @@ public void updateRealTime() {
 }
 }}}
 
-The `updateRealTime()` method itself should be fairly self explanatory but line:
+The `updateRealTime()` method itself just uses some simple maths to work out what the time is (in decimal hours) assuming that each model tick is a minute of real time. However, the line:
 
 {{{
 @ScheduledMethod(start=1, interval=1, priority=10)
 }}}
 
-needs some explanation. This is a way of scheduling a function in Repast using *Java annotations*. It tells the scheduler that we want the method to be called first at iteration 1 (`start=1`), and then at every subsequent iteration (`interval=1`). The `priority` argument tell Repast how important the function is. If there are lots of methods that can be called at the same iteration, Repast chooses the ones with the highest priority first. If lots of methods have the same priority then Repast chooses their order randomly.
+probably needs some explanation. This is a way of scheduling a function in Repast using *Java annotations*. It tells the scheduler that we want the method to be called first at iteration 1 (`start=1`), and then at every subsequent iteration (`interval=1`). The `priority` argument tell Repast how important the function is. If there are lots of methods that can be called at the same iteration, Repast chooses the ones with the highest priority first. If lots of methods have the same priority then Repast chooses their order randomly.
 
 It is possible to have a more fine grained control over when methods are scheduled and in what order they should be called (more on this later), but annotations are nice because they are simple and they appear close to the code that is actually being scheduled. See the [http://repast.sourceforge.net/docs/reference/SIM/Working%20with%20the%20scheduler.html scheduling documentation] for more information.
 
