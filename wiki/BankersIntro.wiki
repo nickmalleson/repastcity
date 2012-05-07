@@ -10,9 +10,9 @@
 This tutorial is based on a small Repast Simphony model called _RepastCity_. The virtual city consists of houses, roads and agents.
 In the basic model, all agents start with a home, they then choose a random building to travel to, go there, and then travel home again; repeating this process forever. 
 
-This tutorial enhance the model to make the behaviour a bit more interesting by turning the agents into criminal bankers (bankers who, in these tough economic times, need to commit burglary to top up their bonuses). We can then explore some interesting city dynamics.
+This tutorial will enhance the model to make the behaviour a bit more interesting by turning the agents into criminal bankers (bankers who, in these tough economic times, need to commit burglary to top up their bonuses). We can then explore some interesting city dynamics.
 
-This tutorial is quite high level, so to really understand what is going on you will need to have done a basic Repast tutorial first. The ones on the [http://repast.sourceforge.net/ Repast Simphony] website are excellent; I would recommend the [http://repast.sourceforge.net/docs/RepastJavaGettingStarted.pdf Java tutorial] in particular.
+This tutorial is quite high level, so to really understand what is going on you will need to have done a basic Repast tutorial first. The ones on the [http://repast.sourceforge.net/ Repast Simphony] website are excellent; I would recommend the [http://repast.sourceforge.net/docs/RepastJavaGettingStarted.pdf Java tutorial] in particular. Or, if you're not familiar with Java, the [http://repast.sourceforge.net/docs/ReLogoGettingStarted.pdf ReLogo tutorial] is also excellent.
 
 The following changes will be made to the basic model:
 
@@ -23,7 +23,7 @@ The following changes will be made to the basic model:
   # Remove a few key roads from the road network to see what affect this will have on patterns of burglary.
 
 
-= GIS Data - York =
+= The GIS Data =
 
 The data for the tutorial cover part of the city of York. It is real GIS data produced by [http://www.ordnancesurvey.co.uk/oswebsite/products/os-mastermap/index.html Ordnance Survey] but, for the sake of this tutorial, the data have been cut down by removing a large number of the houses and roads. The image below illustrates the study area; agents live in a suburban area towards the north of the city and travel into the centre for work. There are a small number of major roads which offer the quickest routes into the city but, due to budget cuts, the council are going to have to close these and the bankers will have to find new routes. This might lead to interesting effects on travel patterns and on burglary rates.
 
