@@ -29,7 +29,7 @@ with the following:
 		}
 		if (random >= 0.99) {
 			b.burgled(); // Tell the building that it has been burgled
-			LOGGER.log(Level.FINE, "Agent " + this.toString() + " has burgled building "
+			LOGGER.log(Level.INFO, "Agent " + this.toString() + " has burgled building "
                                         + b.getIdentifier() + "Total: " + b.getNumBurglaries() + 
 					". Random value: " + random);
 			}
@@ -74,7 +74,7 @@ public void step() throws Exception {
                                 }
                                 if (random >= 0.99) {
                                         b.burgled(); // Tell the building that it has been burgled
-                                        LOGGER.log(Level.FINE, "Agent " + this.toString() + " has burgled building "
+                                        LOGGER.log(Level.INFO, "Agent " + this.toString() + " has burgled building "
                                                         + b.getIdentifier() + "Total: " + b.getNumBurglaries() + ". Random value: " + random);
                                 }
                         }
@@ -83,4 +83,4 @@ public void step() throws Exception {
 } // step()
 }}}
 
-This is all very well, but it would be nice to see where and when the burglaries are taking place. I haven't worked out how to do this with Repast, but in the next secion we will go over a way of [BankersResults outputting the burglary data] at the end of the simulation.
+As it stands, when a burglary happens a message is printed to the Eclipse console, but there is no other indication that a burglary has taken place. I haven't worked out how to do this with Repast, but in the next secion we will go over a way of [BankersResults outputting the burglary data] at the end of the simulation.
