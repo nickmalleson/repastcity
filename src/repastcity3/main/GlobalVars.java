@@ -77,7 +77,8 @@ public abstract class GlobalVars {
 			public String distInMeters;
 		}
 
-		public static final double TRAVEL_PER_TURN = 1; // TODO Make a proper value for this
+		public static final double TRAVEL_PER_TURN = 50; // Slower than average (about 2mph) but good for this simulation.
+
 	}
 	
 	/** Names of contexts and projections. These names must match those in the

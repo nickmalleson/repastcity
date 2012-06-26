@@ -43,6 +43,7 @@ import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
 import repast.simphony.parameter.Parameters;
+import repast.simphony.random.RandomHelper;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.GeographyParameters;
 import repast.simphony.space.gis.SimpleAdder;
@@ -66,9 +67,11 @@ import repastcity3.exceptions.AgentCreationException;
 import repastcity3.exceptions.EnvironmentError;
 import repastcity3.exceptions.NoIdentifierException;
 import repastcity3.exceptions.ParameterNotFoundException;
+import repast.simphony.engine.schedule.ScheduledMethod;
 
 public class ContextManager implements ContextBuilder<Object> {
 
+	
 	/*
 	 * A logger for this class. Note that there is a static block that is used to configure all logging for the model
 	 * (at the bottom of this file).
@@ -78,7 +81,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	// Optionally force agent threading off (good for debugging)
 	private static final boolean TURN_OFF_THREADING = false;;
 
-	private static Properties properties;
+	private static Properties properties;	
 
 	/*
 	 * Pointers to contexts and projections (for convenience). Most of these can be made public, but the agent ones
@@ -226,6 +229,10 @@ public class ContextManager implements ContextBuilder<Object> {
 		// Schedule something that outputs ticks every 1000 iterations.
 		schedule.schedule(ScheduleParameters.createRepeating(1, 1000, ScheduleParameters.LAST_PRIORITY), this,
 				"printTicks");
+		
+		// Schedule the time keeper (maintains a proper clock)
+		schedule.schedule(ScheduleParameters.createRepeating(1, 1, ScheduleParameters.LAST_PRIORITY), this,
+				"updateRealTime");
 
 		/*
 		 * Schedule the agents. This is slightly complicated because if all the agents can be stepped at the same time
@@ -263,6 +270,45 @@ public class ContextManager implements ContextBuilder<Object> {
 		}
 
 	}
+	
+
+	/*
+	 * For creating a clock: A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a
+	 * method, called at every iteration, to update the variable.
+	 */	
+	public static double realTime = 8.0; // (start at 8am)
+	public static int numberOfDays = 0; // It is also useful to count the number of days
+	
+	public void updateRealTime() {
+//		System.out.println("Time: "+RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+", "+realTime);
+		realTime += (1.0 / 60.0); // Increase the time by one minute (a 60th of an hour)
+
+		if (realTime >= 24.0) { // If it's the end of a day then reset the time
+			realTime = 0.0;
+			numberOfDays++; // Also increment our day counter
+			LOGGER.log(Level.INFO, "Simulating day " + numberOfDays);
+		}
+	}
+	
+	/* Convenience methods for getting random numbers, using RandomHelper directly is not
+	 * thread safe. */
+	private static Object randomLock = new Object(); // Lock to ensure only one thread accesses RandomHelper
+	
+	public static int nextIntFromTo(int a, int b) {
+		synchronized (ContextManager.randomLock) {
+			// This synchronized block ensures that only one agent at a time can access RandomHelper
+			return RandomHelper.nextIntFromTo(a,b);
+		}
+	}
+	public static double nextDouble() {
+		synchronized (ContextManager.randomLock) {
+			// This synchronized block ensures that only one agent at a time can access RandomHelper
+			return RandomHelper.nextDouble();
+		}
+	}
+	
+	
+	
 
 	private static long speedTimer = -1; // For recording time per N iterations 
 	public void printTicks() {
@@ -271,6 +317,8 @@ public class ContextManager implements ContextBuilder<Object> {
 				"sec/ticks.");
 		ContextManager.speedTimer = System.currentTimeMillis();
 	}
+	
+	
 
 	/**
 	 * Convenience function to get a Simphony parameter
@@ -571,5 +619,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	public static Geography<IAgent> getAgentGeography() {
 		return ContextManager.agentGeography;
 	}
+	
+	
 
 }

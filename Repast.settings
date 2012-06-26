@@ -10,7 +10,7 @@
     <string>SettingsFileName</string>
     <string>Repast.settings</string>
     <string>LastLoadedScenario</string>
-    <string>/Users/nick/Documents/Dropbox/research/projects/sim_burglar/eclipse_workspace/repastcity3/repastcity3_leeds.rs</string>
+    <string>/Users/nick/Documents/Dropbox/research/projects/sim_burglar/eclipse_workspace/sim_comp_sys_model/repastcity3.rs</string>
     <string>SettingsRegistryId</string>
     <string>Repast.registry</string>
   </hashtable>
