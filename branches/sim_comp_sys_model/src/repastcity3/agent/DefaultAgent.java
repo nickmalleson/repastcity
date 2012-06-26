@@ -14,10 +14,11 @@ GNU General Public License for more details.
 
 You should have received a copy of  the GNU General Public License
 along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package repastcity3.agent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,17 +27,34 @@ import repastcity3.environment.Building;
 import repastcity3.environment.Route;
 import repastcity3.main.ContextManager;
 
+// TODO: rename to 'DumbBurglar' (and also change BurglarFactory because random method only creates DefaultAgent..)
 public class DefaultAgent implements IAgent {
 
 	private static Logger LOGGER = Logger.getLogger(DefaultAgent.class.getName());
 
 	private Building home; // Where the agent lives
 	private Route route; // An object to move the agent around the world
-
-	private boolean goingHome = false; // Whether the agent is going to or from their home
+	 
+	// Need to keep track of current day to make sure the agent burgle (leave home) once per day
+	// If this is less than the day counter then the agent hasn't burgled
+	private int currentDay = -1;  
+	
+	private Building targetArea = null; // SHOULD BE OA / Community
 
 	private static int uniqueID = 0;
 	private int id;
+
+	/** The state of the agent */
+	enum AGENT_STATE {
+		AT_HOME, // Agent is at home
+		TRAVELLING_HOME, // Agent is travelling home
+		// The following are for when the agent is committing burglary:
+		BURGLARY_INIT, // Just created or agent couldn't find a victim, start again
+		TRAVEL_TO_TARGET, // Agent is travelling to their chosen target
+		SEARCHING;// Agent is searching for a victim.
+	}
+
+	private AGENT_STATE currentState = AGENT_STATE.AT_HOME;
 
 	public DefaultAgent() {
 		this.id = uniqueID++;
@@ -45,32 +63,66 @@ public class DefaultAgent implements IAgent {
 	@Override
 	public void step() throws Exception {
 
-		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping.");
-		if (this.route == null) {
-			this.goingHome = false; // Must be leaving home
-			// Choose a new building to go to
-			Building b = ContextManager.buildingContext.getRandomObject();
-			this.route = new Route(this, b.getCoords(), b);
-			LOGGER.log(Level.FINE, this.toString() + " created new route to " + b.toString());
-		}
-		if (!this.route.atDestination()) {
-			this.route.travel();
-			LOGGER.log(Level.FINE, this.toString() + " travelling to " + this.route.getDestinationBuilding().toString());
-		} else {
-			// Have reached destination, now either go home or onto another building
-			if (this.goingHome) {
-				this.goingHome = false;
-				Building b = ContextManager.buildingContext.getRandomObject();
-				this.route = new Route(this, b.getCoords(), b);
-				LOGGER.log(Level.FINE, this.toString() + " reached home, now going to " + b.toString());
-			} else {
-				LOGGER.log(Level.FINE, this.toString() + " reached " + this.route.getDestinationBuilding().toString()
-						+ ", now going home");
-				this.goingHome = true;
-				this.route = new Route(this, this.home.getCoords(), this.home);
-			}
+		LOGGER.log(Level.FINE, "Agent " + this.id + " is stepping. State: " + this.currentState.toString());
 
+		switch (this.currentState) {
+		case AT_HOME:
+			if (ContextManager.realTime >= 9.0 && this.currentDay < ContextManager.numberOfDays) {
+				// It's after 9am and the agent hasn't left home yet, so choose somewhere to burgle
+				this.currentState = AGENT_STATE.BURGLARY_INIT;
+				this.currentDay = ContextManager.numberOfDays; // This will stop the agent burgling again today.
+			}
+			break;
+			
+		case TRAVELLING_HOME:
+			
+			if (this.route.atDestination()) {
+				this.currentState = AGENT_STATE.AT_HOME; 
+				this.route = null;
+			}
+			else {
+				this.route.travel(null);
+			}
+			break;				
+
+			
+		case BURGLARY_INIT:
+			// Need to start a burglar. Choose where to travel to.
+			
+			// XXXX CHOOSE AREA TO TRAVEL TO
+			this.targetArea = ContextManager.buildingContext.getRandomObject();
+			this.route = new Route(this, this.targetArea.getCoords(), null);
+			this.currentState = AGENT_STATE.TRAVEL_TO_TARGET;
+			
+			break;
+			
+		case TRAVEL_TO_TARGET:
+			if (this.route.atDestination()) {
+				// Have reached destination but haven't found a target. Just choose another victim
+				this.currentState = AGENT_STATE.BURGLARY_INIT;
+			}
+			else { // Keep going towards target, possibly burgling one of the passed houses.
+				List<Building> passedBuildings = new ArrayList<Building>();
+				this.route.travel(passedBuildings);
+				if ((passedBuildings.size() > 0) && (ContextManager.nextDouble() < 0.01) ) { // Possibly burgle one of the houses we have passed.
+					Building victim = passedBuildings.get(ContextManager.nextIntFromTo(0, passedBuildings.size()-1));
+					
+					// Successful burglary, now go home.
+					this.currentState = AGENT_STATE.TRAVELLING_HOME;
+					this.route = new Route(this, this.home.getCoords(), this.home);
+					LOGGER.log(Level.INFO, "Agent " + this.id + " has burgled "+victim.toString());
+				}				
+			}
+			
+			break;
+			
+		case SEARCHING:
+			// TODO: Implement a nice search. For now this is never actually called.. 
+								
+			break;
 		}
+
+	
 
 	} // step()
 
