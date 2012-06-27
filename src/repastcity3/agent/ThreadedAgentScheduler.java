@@ -100,6 +100,7 @@ class ThreadController implements Runnable {
 	public ThreadController(ThreadedAgentScheduler cc) {
 		this.cc = cc;
 		this.numCPUs = Runtime.getRuntime().availableProcessors();
+		LOGGER.info("There are "+this.numCPUs+" processors available.");
 		// Set all CPU status to 'free'
 		this.cpuStatus = new boolean[this.numCPUs];
 		for (int i = 0; i < this.numCPUs; i++) {

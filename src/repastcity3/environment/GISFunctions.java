@@ -34,9 +34,7 @@ import repast.simphony.context.Context;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.ShapefileLoader;
 import repast.simphony.space.graph.Network;
-import repast.simphony.space.graph.RepastEdge;
-import repastcity3.exceptions.NoIdentifierException;
-import repastcity3.main.ContextManager;
+
 
 /**
  * Class with useful GIS functions for configuring the GIS model environment.

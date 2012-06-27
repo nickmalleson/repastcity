@@ -53,6 +53,7 @@ import repastcity3.agent.AgentFactory;
 import repastcity3.agent.IAgent;
 import repastcity3.agent.ThreadedAgentScheduler;
 import repastcity3.environment.Building;
+import repastcity3.environment.Community;
 import repastcity3.environment.GISFunctions;
 import repastcity3.environment.Junction;
 import repastcity3.environment.NetworkEdge;
@@ -61,6 +62,7 @@ import repastcity3.environment.Road;
 import repastcity3.environment.SpatialIndexManager;
 import repastcity3.environment.contexts.AgentContext;
 import repastcity3.environment.contexts.BuildingContext;
+import repastcity3.environment.contexts.CommunityContext;
 import repastcity3.environment.contexts.JunctionContext;
 import repastcity3.environment.contexts.RoadContext;
 import repastcity3.exceptions.AgentCreationException;
@@ -94,6 +96,9 @@ public class ContextManager implements ContextBuilder<Object> {
 	// building context and projection cab be public (thread safe) because buildings only queried
 	public static Context<Building> buildingContext;
 	public static Geography<Building> buildingProjection;
+	
+	public static Context<Community> communityContext;
+	public static Geography<Community> communityProjection;
 
 	public static Context<Road> roadContext;
 	public static Geography<Road> roadProjection;
@@ -141,7 +146,8 @@ public class ContextManager implements ContextBuilder<Object> {
 			LOGGER.log(Level.FINER, "Read " + buildingContext.getObjects(Building.class).size() + " buildings from "
 					+ buildingFile);
 
-			// TODO Cast the buildings to their correct subclass
+			// TODO Cast the buildings to their correct subclass. At the moment this model doesn't differentiate
+			// between houses, workplaces etc.
 
 			// Create the Roads - context and geography
 			roadContext = new RoadContext();
@@ -153,9 +159,21 @@ public class ContextManager implements ContextBuilder<Object> {
 			mainContext.addSubContext(roadContext);
 			SpatialIndexManager.createIndex(roadProjection, Road.class);
 			LOGGER.log(Level.FINER, "Read " + roadContext.getObjects(Road.class).size() + " roads from " + roadFile);
+			
+			// Create the communities (OAs with OAC data).
+			communityContext = new CommunityContext();
+			communityProjection = GeographyFactoryFinder.createGeographyFactory(null).createGeography(
+					GlobalVars.CONTEXT_NAMES.COMMUNITY_GEOGRAPHY, communityContext,
+					new GeographyParameters<Community>(new SimpleAdder<Community>()));
+			String communityFile = gisDataDir + getProperty(GlobalVars.CommunityShapefile);
+			GISFunctions.readShapefile(Community.class, communityFile, communityProjection, communityContext);
+			mainContext.addSubContext(communityContext);
+			SpatialIndexManager.createIndex(communityProjection, Community.class);
+			LOGGER.log(Level.FINER, "Read " + communityContext.getObjects(Community.class).size() + " communities from " + communityFile);
+						
 
 			// Create road network
-
+			
 			// 1.junctionContext and junctionGeography
 			junctionContext = new JunctionContext();
 			mainContext.addSubContext(junctionContext);
@@ -256,12 +274,12 @@ public class ContextManager implements ContextBuilder<Object> {
 			 * Agents can be threaded so the step scheduling not actually done by repast scheduler, a method in
 			 * ThreadedAgentScheduler is called which manually steps each agent.
 			 */
-			LOGGER.log(Level.FINE, "The multi-threaded scheduler will be used.");
+			LOGGER.log(Level.INFO, "The multi-threaded scheduler will be used.");
 			ThreadedAgentScheduler s = new ThreadedAgentScheduler();
 			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 0);
 			schedule.schedule(agentStepParams, s, "agentStep");
 		} else { // Agents will execute in serial, use the repast scheduler.
-			LOGGER.log(Level.FINE, "The single-threaded scheduler will be used.");
+			LOGGER.log(Level.INFO, "The single-threaded scheduler will be used.");
 			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 0);
 			// Schedule the agents' step methods.
 			for (IAgent a : agentContext.getObjects(IAgent.class)) {

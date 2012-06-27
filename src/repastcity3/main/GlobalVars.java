@@ -45,6 +45,7 @@ public abstract class GlobalVars {
 	public static final String GISDataDirectory = "GISDataDirectory";
 	public static final String BuildingShapefile = "BuildingShapefile";
 	public static final String RoadShapefile = "RoadShapefile";
+	public static final String CommunityShapefile = "CommunityShapefile";
 	public static final String BuildingsRoadsCoordsCache = "BuildingsRoadsCoordsCache";
 	public static final String BuildingsRoadsCache = "BuildingsRoadsCache";
 
@@ -53,6 +54,8 @@ public abstract class GlobalVars {
 
 	/** A constant used to define agents in the parameter file */
 	public static final String AGENT_DEFINITION = "AGENT_DEFINITION";
+
+	
 	
 	public static final class GEOGRAPHY_PARAMS {
 		
@@ -111,6 +114,9 @@ public abstract class GlobalVars {
 		
 		public static final String AGENT_CONTEXT = "AgentContext";
 		public static final String AGENT_GEOGRAPHY = "AgentGeography";
+		
+		public static final Object COMMUNITY_CONTEXT = "CommunityContext";
+		public static final String COMMUNITY_GEOGRAPHY = "CommunityGeography";
 	
 	}
 	
