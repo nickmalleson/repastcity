@@ -9,5 +9,7 @@
 		<projection type="network" id="RoadNetwork"></projection></context>
 	
 	<projection type="geography" id="MainGeography"></projection>
+	<context id="CommunityContext">
+		<projection type="geography" id="CommunityGeography"></projection></context>
 
 </context>
