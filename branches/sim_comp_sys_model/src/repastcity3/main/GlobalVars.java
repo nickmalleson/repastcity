@@ -37,12 +37,22 @@ public abstract class GlobalVars {
 	
 	private static Logger LOGGER = Logger.getLogger(GlobalVars.class.getName());
 	
+	/** When running the model programatically (or using MPJ) this needs to be set so that the simulation
+	 * can be ended if necessary (the runner takes control of the scheduling). */
+	public static RepastCityRunner RUNNER = null;
+	
 	/* These are strings that match entries in the repastcity.properties file.*/
 	public static final String GISDataDirectory = "GISDataDirectory";
 	public static final String BuildingShapefile = "BuildingShapefile";
 	public static final String RoadShapefile = "RoadShapefile";
 	public static final String BuildingsRoadsCoordsCache = "BuildingsRoadsCoordsCache";
 	public static final String BuildingsRoadsCache = "BuildingsRoadsCache";
+
+	/** How long the simulation should run for. TODO: this should be a model parameter*/
+	public static final double RUN_TIME = 10000;
+
+	/** A constant used to define agents in the parameter file */
+	public static final String AGENT_DEFINITION = "AGENT_DEFINITION";
 	
 	public static final class GEOGRAPHY_PARAMS {
 		

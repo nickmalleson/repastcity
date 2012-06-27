@@ -1,0 +1,54 @@
+Jun 27, 2012 10:37:30 AM repastcity3.main.ContextManager build
+INFO: Creating agents with the agent definition: 'random:1'
+Jun 27, 2012 10:37:30 AM repastcity3.agent.AgentFactory createRandomAgents
+INFO: Creating 1 agents using random method.
+Jun 27, 2012 10:37:30 AM repastcity3.main.RepastCityMain main
+INFO: RepastCityMain: will end runs at 10000.0 iterations
+Jun 27, 2012 10:37:30 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 1.0. Speed: 1.340789850157E9sec/ticks.
+Jun 27, 2012 10:37:33 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032902569
+Jun 27, 2012 10:37:34 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 1
+Jun 27, 2012 10:37:34 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 1001.0. Speed: 4.181sec/ticks.
+Jun 27, 2012 10:37:34 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032990315
+Jun 27, 2012 10:37:35 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 2001.0. Speed: 0.847sec/ticks.
+Jun 27, 2012 10:37:35 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 2
+Jun 27, 2012 10:37:36 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 3001.0. Speed: 0.989sec/ticks.
+Jun 27, 2012 10:37:36 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032786323
+Jun 27, 2012 10:37:37 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 3
+Jun 27, 2012 10:37:37 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 4001.0. Speed: 1.101sec/ticks.
+Jun 27, 2012 10:37:37 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032787419
+Jun 27, 2012 10:37:38 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 5001.0. Speed: 0.977sec/ticks.
+Jun 27, 2012 10:37:38 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 4
+Jun 27, 2012 10:37:38 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032987805
+Jun 27, 2012 10:37:38 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 6001.0. Speed: 0.679sec/ticks.
+Jun 27, 2012 10:37:39 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 5
+Jun 27, 2012 10:37:39 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 7001.0. Speed: 0.306sec/ticks.
+Jun 27, 2012 10:37:39 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032845646
+Jun 27, 2012 10:37:40 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 8001.0. Speed: 0.968sec/ticks.
+Jun 27, 2012 10:37:40 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 6
+Jun 27, 2012 10:37:40 AM repastcity3.agent.DefaultAgent step
+INFO: Agent 0 has burgled building: 1000032843054
+Jun 27, 2012 10:37:41 AM repastcity3.main.ContextManager printTicks
+INFO: Iterations: 9001.0. Speed: 0.924sec/ticks.
+Jun 27, 2012 10:37:41 AM repastcity3.main.ContextManager updateRealTime
+INFO: Simulating day 7

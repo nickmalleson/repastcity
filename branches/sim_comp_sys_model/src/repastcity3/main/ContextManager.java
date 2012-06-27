@@ -199,18 +199,18 @@ public class ContextManager implements ContextBuilder<Object> {
 					GlobalVars.CONTEXT_NAMES.AGENT_GEOGRAPHY, agentContext,
 					new GeographyParameters<IAgent>(new SimpleAdder<IAgent>()));
 
-			String agentDefn = ContextManager.getParameter(MODEL_PARAMETERS.AGENT_DEFINITION.toString());
-
+//			String agentDefn = ContextManager.getParameter(MODEL_PARAMETERS.AGENT_DEFINITION.toString());
+			String agentDefn = getProperty(GlobalVars.AGENT_DEFINITION);
 			LOGGER.log(Level.INFO, "Creating agents with the agent definition: '" + agentDefn + "'");
 
 			AgentFactory agentFactory = new AgentFactory(agentDefn);
 			agentFactory.createAgents(agentContext);
 
-		} catch (ParameterNotFoundException e) {
-			LOGGER.log(Level.SEVERE, "Could not find the parameter which defines how agents should be "
-					+ "created. The parameter is called " + MODEL_PARAMETERS.AGENT_DEFINITION
-					+ " and should be added to the parameters.xml file.", e);
-			return null;
+//		} catch (ParameterNotFoundException e) {
+//			LOGGER.log(Level.SEVERE, "Could not find the parameter which defines how agents should be "
+//					+ "created. The parameter is called " + MODEL_PARAMETERS.AGENT_DEFINITION
+//					+ " and should be added to the parameters.xml file.", e);
+//			return null;
 		} catch (AgentCreationException e) {
 			LOGGER.log(Level.SEVERE, "", e);
 			return null;
@@ -271,6 +271,14 @@ public class ContextManager implements ContextBuilder<Object> {
 
 	}
 	
+	/** Stops the simulation. Attempts to call stop methods for GUI and if model is running programatically
+	 * or on NGS */
+	public static void haltSim() {
+		RunEnvironment.getInstance().endRun(); // stop sim us using gui
+		RepastCityMain.stopSim(); // stop sim if running programatically
+		//RepastCityMainMPJ.stopSim();	// stop sim if on NGS
+	}
+	
 
 	/*
 	 * For creating a clock: A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a
@@ -319,31 +327,32 @@ public class ContextManager implements ContextBuilder<Object> {
 	}
 	
 	
-
-	/**
-	 * Convenience function to get a Simphony parameter
-	 * 
-	 * @param <T>
-	 *            The type of the parameter
-	 * @param paramName
-	 *            The name of the parameter
-	 * @return The parameter.
-	 * @throws ParameterNotFoundException
-	 *             If the parameter could not be found.
-	 */
-	public static <V> V getParameter(String paramName) throws ParameterNotFoundException {
-		Parameters p = RunEnvironment.getInstance().getParameters();
-		Object val = p.getValue(paramName);
-
-		if (val == null) {
-			throw new ParameterNotFoundException(paramName);
-		}
-
-		// Try to cast the value and return it
-		@SuppressWarnings("unchecked")
-		V value = (V) val;
-		return value;
-	}
+// Have removed this because no longer using Simphony parameters. They don't work when running the simulation
+	// from the command line (!)
+//	/**
+//	 * Convenience function to get a Simphony parameter
+//	 * 
+//	 * @param <T>
+//	 *            The type of the parameter
+//	 * @param paramName
+//	 *            The name of the parameter
+//	 * @return The parameter.
+//	 * @throws ParameterNotFoundException
+//	 *             If the parameter could not be found.
+//	 */
+//	public static <V> V getParameter(String paramName) throws ParameterNotFoundException {
+//		Parameters p = RunEnvironment.getInstance().getParameters();
+//		Object val = p.getValue(paramName);
+//
+//		if (val == null) {
+//			throw new ParameterNotFoundException(paramName);
+//		}
+//
+//		// Try to cast the value and return it
+//		@SuppressWarnings("unchecked")
+//		V value = (V) val;
+//		return value;
+//	}
 
 	/**
 	 * Get the value of a property in the properties file. If the input is empty or null or if there is no property with
