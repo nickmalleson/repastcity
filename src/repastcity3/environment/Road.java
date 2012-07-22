@@ -180,6 +180,9 @@ public class Road implements FixedGeography, Identified {
 			throw new DuplicateIdentifierException("A road with identifier '" + identifier + "' has already "
 					+ "been created - cannot have two roads with the same unique ID.");
 		}
+		else {
+			Road.idMap.put(identifier, null);
+		}
 		this.identifier = identifier;
 	}
 

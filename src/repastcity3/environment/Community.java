@@ -17,12 +17,15 @@ along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.*/
 package repastcity3.environment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
-//import java.util.logging.Logger;
+import java.util.logging.Logger;
 
+import repastcity3.exceptions.DuplicateIdentifierException;
 import repastcity3.exceptions.NoIdentifierException;
+import repastcity3.main.ContextManager;
 import repastcity3.main.Functions;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -45,15 +48,22 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 public class Community implements FixedGeography, Identified {
 	
-//	private static Logger LOGGER = Logger.getLogger(Community.class.getName());
+	private static Logger LOGGER = Logger.getLogger(Community.class.getName());
 	
 	/**
 	 * A unique identifier for communities, usually set from the 'identifier' column in a shapefile
 	 */
-	private String identifier;
+	private String identifier = null;
+	// Map to make sure IDs are unique
+	private static Map<String, ?> idMap = new HashMap<String, Object>();
 	
 	/** A list of all buildings in this community */
 	private List<Building> buildings = new ArrayList<Building>();
+	
+	/** An estimate of the area of this Community. Calculated when it is first called. */
+	private double area=-1;
+	/** An estimate of the average distance to any point in this community. Calculated when it is first called. */
+	private double averageDist = -1;
 
 	/**
 	 * The coordinates of the Community. This is also stored by the projection that contains this Community but it is
@@ -123,8 +133,7 @@ public class Community implements FixedGeography, Identified {
 	}
 
 	public List<Building> getBuildings() {
-		throw new UnsupportedOperationException("Haven't read buildings into communities yet");
-//		return this.buildings;
+		return this.buildings;
 		
 	}
 
@@ -160,27 +169,48 @@ public class Community implements FixedGeography, Identified {
 
 	public String getIdentifier() throws NoIdentifierException {
 		if (this.identifier == null) {
-			throw new NoIdentifierException("This building has no identifier. This can happen "
-					+ "when roads are not initialised correctly (e.g. there is no attribute "
-					+ "called 'identifier' present in the shapefile used to create this Road)");
+			throw new NoIdentifierException("This community has no identifier. This can happen "
+					+ "when they are not initialised correctly (e.g. there is no attribute "
+					+ "called 'identifier' present in the shapefile used to create this Community)");
 		} else {
 			return identifier;
 		}
 	}
 
-	public void setIdentifier(String id) {
-		this.identifier = id;
+	public void setIdentifier(String identifier) throws DuplicateIdentifierException {
+		// Check the ID is unique
+		if (Community.idMap.containsKey(identifier)) {
+			throw new DuplicateIdentifierException("A road with identifier '" + identifier + "' has already "
+					+ "been created - cannot have two roads with the same unique ID.");
+		}
+		else {
+			Community.idMap.put(identifier, null);
+		}
+
+		this.identifier = identifier;
+	}
+
+	
+	
+	public double getAverageDistance() {
+		if (this.area==-1) {
+			this.area = ContextManager.communityProjection.getGeometry(this).getArea();
+		}
+			
+		if (this.averageDist==-1) { // Calculate the average distance
+			this.averageDist = Math.sqrt((this.area/Math.PI))/2; // return half the radius
+		}
+		return this.averageDist;	
 	}
 
 
 
 	@Override
 	public boolean equals(Object obj) {
-//		if (!(obj instanceof Building))
-//			return false;
-//		Building b = (Building) obj;
-//		return this.identifier.equals(b.identifier);
-		throw new UnsupportedOperationException("Not implemented yet");
+		if (!(obj instanceof Community))
+			return false;
+		Community c = (Community) obj;
+		return this.identifier.equals(c.identifier);
 	}
 
 	/**
@@ -188,13 +218,12 @@ public class Community implements FixedGeography, Identified {
 	 */
 	@Override
 	public int hashCode() {
-		throw new UnsupportedOperationException("Not implemented yet");
-//		if (this.identifier==null) {
-//			LOGGER.severe("hashCode called but this object's identifier has not been set. It is likely that you're " +
-//					"reading a shapefile that doesn't have a string column called 'identifier'");
-//		}
-//
-//		return this.identifier.hashCode();
+		if (this.identifier==null) {
+			LOGGER.severe("hashCode called but this object's identifier has not been set. It is likely that you're " +
+					"reading a shapefile that doesn't have a string column called 'identifier'");
+		}
+
+		return this.identifier.hashCode();
 	}
 
 	/**
@@ -207,8 +236,19 @@ public class Community implements FixedGeography, Identified {
 	}
 	
 	private void setVariableValue(int i, double v) {
-
 		this.variableValues.put(i, v);
+	}
+	
+	/**
+	 * Throws a RuntimeException if there is no identifier for this community.
+	 */
+	@Override
+	public String toString() {
+		try {
+			return this.getIdentifier();
+		} catch (NoIdentifierException e) {
+			throw new RuntimeException(e.getMessage(), e);
+		}
 	}
 	
 	

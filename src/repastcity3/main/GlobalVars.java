@@ -48,6 +48,12 @@ public abstract class GlobalVars {
 	public static final String CommunityShapefile = "CommunityShapefile";
 	public static final String BuildingsRoadsCoordsCache = "BuildingsRoadsCoordsCache";
 	public static final String BuildingsRoadsCache = "BuildingsRoadsCache";
+	
+	
+	/** Name of the file for logging information messages) */
+	public static final String LogInfo = "model_log-info.txt"; 
+	/** Name of the file for logging *all* messages */
+	public static final String LogAll = "model_log-all.txt";
 
 	/** How long the simulation should run for. TODO: this should be a model parameter*/
 	public static final double RUN_TIME = 10000;
