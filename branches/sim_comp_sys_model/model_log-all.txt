@@ -1,0 +1,30 @@
+Jul 22, 2012 12:27:58 PM repastcity3.main.RepastCityLogging <clinit>
+INFO: This logger is configured for INFO
+Jul 22, 2012 12:27:58 PM repastcity3.main.RepastCityLogging <clinit>
+SEVERE: This logger is configured for SEVERE
+Jul 22, 2012 12:27:58 PM repastcity3.main.RepastCityLogging <clinit>
+WARNING: This logger is configured for WARNING
+Jul 22, 2012 12:27:58 PM repastcity3.main.RepastCityLogging <clinit>
+FINE: This logger is configured for FINE
+Jul 22, 2012 12:27:58 PM repastcity3.main.RepastCityLogging <clinit>
+FINEST: This logger is configured for FINEST
+Jul 22, 2012 12:27:58 PM repastcity3.main.ContextManager readProperties
+FINE: Initialising properties from file ./repastcity.properties
+Jul 22, 2012 12:28:00 PM repastcity3.main.ContextManager build
+FINE: Configuring the environment with data from ./data/gis_data/leeds_wgs/
+Jul 22, 2012 12:28:05 PM repastcity3.main.ContextManager build
+FINER: Read 50057 buildings from ./data/gis_data/leeds_wgs/buildings.shp
+Jul 22, 2012 12:28:06 PM repastcity3.main.ContextManager build
+FINER: Read 8614 roads from ./data/gis_data/leeds_wgs/roads.shp
+Jul 22, 2012 12:28:18 PM repastcity3.main.ContextManager build
+FINER: Read 489 communities from ./data/gis_data/leeds_wgs/communities-easel.shp
+Jul 22, 2012 12:28:18 PM repastcity3.main.ContextManager testEnvironment
+FINE: Testing the environment
+Jul 22, 2012 12:28:18 PM repastcity3.main.ContextManager testEnvironment
+FINE: The road network has 6749 nodes and 8614 edges.
+Jul 22, 2012 12:28:18 PM repastcity3.main.ContextManager build
+INFO: Creating agents with the agent definition: 'random:1'
+Jul 22, 2012 12:28:18 PM repastcity3.agent.AgentFactory createRandomAgents
+INFO: Creating 1 agents using random method.
+Jul 22, 2012 12:28:18 PM repastcity3.main.ContextManager createSchedule
+INFO: The multi-threaded scheduler will be used. There are 4 processors.

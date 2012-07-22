@@ -100,7 +100,6 @@ class ThreadController implements Runnable {
 	public ThreadController(ThreadedAgentScheduler cc) {
 		this.cc = cc;
 		this.numCPUs = Runtime.getRuntime().availableProcessors();
-		LOGGER.info("There are "+this.numCPUs+" processors available.");
 		// Set all CPU status to 'free'
 		this.cpuStatus = new boolean[this.numCPUs];
 		for (int i = 0; i < this.numCPUs; i++) {
@@ -225,6 +224,7 @@ class BurglarThread implements Runnable {
 			this.theburglar.step();
 		} catch (Exception ex) {
 			LOGGER.log(Level.SEVERE, "ThreadedAgentScheduler caught an error, telling model to stop", ex);
+			ContextManager.error = true; // Indicate that we're stopping because of an error.
 			ContextManager.stopSim(ex, this.getClass());
 		}
 		// Tell the ThreadController that this thread has finished

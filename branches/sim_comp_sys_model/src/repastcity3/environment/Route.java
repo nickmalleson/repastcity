@@ -73,9 +73,12 @@ public class Route implements Cacheable {
 
 	private static Logger LOGGER = Logger.getLogger(Route.class.getName());
 
-	static {
-		// Route.routeCache = new Hashtable<CachedRoute, CachedRoute>();
-	}
+	
+//	static {
+//		Route.routeCache = new Hashtable<CachedRoute, CachedRoute>();
+//	}
+	
+	private static Map<CachedRoute, CachedRoute> routeCache = new Hashtable<CachedRoute, CachedRoute>();
 
 	private IAgent agent;
 	private Coordinate destination;
@@ -135,8 +138,8 @@ public class Route implements Cacheable {
 	 * cognitive map multiple times (the agent could spend a number of iterations on the same road or community).
 	 * NOTE: Not doing this at the moment because no implementation of burglary memory). 
 	 */
-	private Road previousRoad;
-	private Area previousArea;
+//	private Road previousRoad;
+//	private Area previousArea;
 
 	/**
 	 * Creates a new Route object.
@@ -198,26 +201,26 @@ public class Route implements Cacheable {
 		Coordinate destCoord = this.destination;
 
 		// See if a route has already been cached.
-		// CachedRoute cachedRoute = new CachedRoute(currentCoord, destCoord, this.agent.getTransportAvailable());
-		// synchronized (Route.routeCache) {
-		// if (Route.routeCache.containsKey(cachedRoute)) {
-		// TempLogger.out("Route.setRoute, found a cached route from " + currentCoord + " to " + destCoord
-		// + " using available transport " + this.agent.getTransportAvailable() + ", returning it.");
-		// // Return a clone of the route that is stored in the cache
-		// // TODO do we need clones here? I don't think so...
-		// CachedRoute cr = Route.routeCache.get(cachedRoute);
-		// // this.routeX = Cloning.copy(cr.getRoute());
-		// // this.roadsX = new ArrayList<Road>(cr.getRoads());
-		// // this.routeSpeedsX = new ArrayList<Double>(cr.getRouteSpeeds());
-		// // this.routeDescriptionX = new ArrayList<String>(cr.getDescriptions());
-		// this.routeX = new Vector<Coordinate>(cr.getRoute());
-		// this.roadsX = new Vector<Road>(cr.getRoads());
-		// this.routeSpeedsX = new Vector<Double>(cr.getRouteSpeeds());
-		// this.routeDescriptionX = new Vector<String>(cr.getDescriptions());
-		//
-		// return;
-		// }
-		// } // synchronized
+		CachedRoute cachedRoute = new CachedRoute(currentCoord, destCoord, this.agent.getTransportAvailable());
+		synchronized (Route.routeCache) {
+			if (Route.routeCache.containsKey(cachedRoute)) {
+				// TempLogger.out("Route.setRoute, found a cached route from " + currentCoord + " to " + destCoord
+				// + " using available transport " + this.agent.getTransportAvailable() + ", returning it.");
+				// Return a clone of the route that is stored in the cache
+				// // TODO do we need clones here? I don't think so...
+				CachedRoute cr = Route.routeCache.get(cachedRoute);
+				// // this.routeX = Cloning.copy(cr.getRoute());
+				// // this.roadsX = new ArrayList<Road>(cr.getRoads());
+				// // this.routeSpeedsX = new ArrayList<Double>(cr.getRouteSpeeds());
+				// // this.routeDescriptionX = new ArrayList<String>(cr.getDescriptions());
+				this.routeX = new Vector<Coordinate>(cr.getRoute());
+				this.roadsX = new Vector<Road>(cr.getRoads());
+				this.routeSpeedsX = new Vector<Double>(cr.getRouteSpeeds());
+				this.routeDescriptionX = new Vector<String>(cr.getDescriptions());
+				//
+				return;
+			}
+		} // synchronized
 
 		// No route cached, have to create a new one (and cache it at the end).
 		try {
@@ -1499,8 +1502,10 @@ class NearestRoadCoordCache implements Serializable {
 		double bufferMultiplier = 1.0;
 		Envelope searchEnvelope = coordGeom.buffer(bufferDist * bufferMultiplier).getEnvelopeInternal();
 		StringBuilder debug = new StringBuilder(); // incase the operation fails
-
-		for (Road r : ContextManager.roadProjection.getObjectsWithin(searchEnvelope)) {
+		
+		Iterable<Road> roads = ContextManager.roadProjection.getObjectsWithin(searchEnvelope);
+		int roadCount = 0; // For debugging, useful to know if there are no roads returned
+		for (Road r : roads) {
 
 			DistanceOp distOp = new DistanceOp(coordGeom, ContextManager.roadProjection.getGeometry(r));
 			double thisDist = distOp.distance();
@@ -1521,6 +1526,7 @@ class NearestRoadCoordCache implements Serializable {
 				nearestPoint = (c.equals(closestPoints[0])) ? closestPoints[1] : closestPoints[0];
 			} // if thisDist < minDist
 			debug.append("\n");
+			roadCount++;
 
 		} // for nearRoads
 
@@ -1532,13 +1538,16 @@ class NearestRoadCoordCache implements Serializable {
 		/* IF HERE THEN ERROR, PRINT DEBUGGING INFO */
 		StringBuilder debugIntro = new StringBuilder(); // Some extra info for debugging
 		debugIntro.append("Route.NearestRoadCoordCache.get() error: couldn't find a coordinate to return.\n");
-		Iterable<Road> roads = ContextManager.roadProjection.getObjectsWithin(searchEnvelope);
+//		Iterable<Road> roads = ContextManager.roadProjection.getObjectsWithin(searchEnvelope);
 		debugIntro.append("Looking for nearest road coordinate around ").append(c.toString()).append(".\n");
 		debugIntro.append("RoadEnvironment.getObjectsWithin() returned ").append(
-				ContextManager.sizeOfIterable(roads) + " roads, printing debugging info:\n");
-		debugIntro.append(debug);
-		throw new Exception(debugIntro.toString());
+				ContextManager.sizeOfIterable(roads) + " roads");
+		if (roadCount>0) { // No point in printing debugging info if there are no roads returned
+			debugIntro.append(", printing debugging info:\n");
+			debugIntro.append(debug);
+		}				
 
+		throw new Exception(debugIntro.toString());
 	}
 
 	private void serialise() throws IOException {

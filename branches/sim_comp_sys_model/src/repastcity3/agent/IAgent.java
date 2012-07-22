@@ -21,6 +21,7 @@ package repastcity3.agent;
 import java.util.List;
 
 import repastcity3.environment.Building;
+import repastcity3.environment.Community;
 
 /**
  * All agents must implement this interface so that it the simulation knows how
@@ -50,14 +51,26 @@ public interface IAgent {
 	boolean isThreadable();
 	
 	/**
-	 * Set where the agent lives.
+	 * Set the biulding where the agent lives. This doesn't actually move the agent - the agentProjection needs to be used
+	 * for that. It is just a record for efficient access.
 	 */
 	void setHome(Building home);
 	
 	/**
-	 * Get the agent's home.
+	 * Get the agent's home building.
 	 */
 	Building getHome();
+	
+	/**
+	 * Set the community where the agent lives. This doesn't actually move the agent - the agentProjection needs to be used
+	 * for that. It is just a record for efficient access.
+	 */
+	void setHomeCommunity(Community home);
+	
+	/**
+	 * Get the agent's home community..
+	 */
+	Community getHomeCommunity();
 	
 	/**
 	 * (Optional). Add objects to the agents memory. Used to keep a record of all the

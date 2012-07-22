@@ -61,6 +61,7 @@ public abstract class SpatialIndexManager implements Cacheable {
 		Index<T> i = new Index<T>(geog, clazz);
 		SpatialIndexManager.indices.put(geog, i);
 	}
+	
 	/**
 	 * Find the nearest object in the given geography to the coordinate.
 	 * 
@@ -78,9 +79,11 @@ public abstract class SpatialIndexManager implements Cacheable {
 	 *             If there is no spatial index for the given geography.
 	 */
 	@SuppressWarnings("unchecked")
-	public static synchronized <T> T findNearestObject(Geography<T> geog, Coordinate x, List<Coordinate> closestPoints,
+	public static <T> T findNearestObject(Geography<T> geog, Coordinate x, List<Coordinate> closestPoints,
 			GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE searchDist) 
 		throws NoSuchElementException {
+		
+		// NOTE: this method used to be synchronized, but I can't see why, maybe not thread safe?
 		
 		
 		Index<T> index = (Index<T>) indices.get(geog);
@@ -120,13 +123,75 @@ public abstract class SpatialIndexManager implements Cacheable {
 		return nearestObject;
 	}
 	
+	
+	/**
+	 * Find the object at the given coordinate.
+	 * 
+	 * @param <T> The type of object that will be returned.
+	 * @param x
+	 *            The coordinate to search around
+	 * @param geography
+	 *            The given geography to look through
+	 * @return The object at the given coordinates or null if there isn't one there.
+	 * @throws NoSuchElementException
+	 *             If there is no spatial index for the given geography.
+	 * @throws Exception 
+	 *             If more or less than 1 objects are found at the coordinate (for want of a more appropriate exception!).
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T findObjectAt(Geography<T> geog, Point p, 
+			GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE searchDist) throws NoSuchElementException, Exception {
+
+		Index<T> index = (Index<T>) indices.get(geog);
+		if (index==null) {
+			throw new NoSuchElementException("The geometry "+geog.getName()+" does not have a spatial index.");
+		}
+		
+		
+		// Query the spatial index for the nearest objects.
+		List<Geometry> close = index.si.query(p.getEnvelope().buffer(searchDist.dist).getEnvelopeInternal());
+		assert close != null && close.size() > 0 : "For some reason the spatial index query hasn't found any obejects " +
+				"close to the given coordinate "+p.toString();
+		
+		if (close==null || close.size()<1) {
+			throw new Exception("No objects found at point "+p.toString());
+		}
+		
+		// Now go through and find the one object that the coordinate is within
+		Geometry touching = null;
+		for (Geometry g:close) {
+			if (p.within(g)) {
+				if (touching != null) {
+					throw new Exception("More than one object found at the point " +p.toString());
+				}
+				touching = g;
+			}
+		}
+		
+		// Now find the object associated with the geometry
+		T theObject = index.lookupFeature(touching);
+		return theObject;
+	}
+	
+	/**
+	 * Wrapper for the other findObjectAt() function which allows a Coordinate to be passed rather than a Point.
+	 */
+	public static <T> T findObjectAt(Geography<T> geog, Coordinate x, 
+			GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE searchDist) throws NoSuchElementException, Exception {
+		
+		Point p = new GeometryFactory().createPoint(x);
+		return SpatialIndexManager.findObjectAt(geog, p, searchDist);
+	}
+	
+
+	
 	/**
 	 * Search for objects located at the given coordinate. This uses the <code>query()</code> function of the
 	 * underlying spatial index so might return objects that are close two, but do not interesect, the coordinate. 
 	 * 
 	 * @param <T> The type of object that will be returned.
 	 * @param x
-	 *            The coordinate to search around
+	 *            The location to search around
 	 * @param geography
 	 *            The given geography to look through
 	 * @return The objects that intersect the coordinate (or are close to it) or an empty list if none could be found. 
@@ -135,7 +200,9 @@ public abstract class SpatialIndexManager implements Cacheable {
 	 * @see STRtree
 	 */
 	@SuppressWarnings("unchecked")
-	public static synchronized <T> List<T> search(Geography<T> geog, Geometry geom) throws NoSuchElementException {
+	public static  <T> List<T> search(Geography<T> geog, Geometry geom) throws NoSuchElementException {
+		
+		// NOTE: this method used to be synchronized, but I can't see why, maybe not thread safe?
 		
 		Index<T> index = (Index<T>) indices.get(geog);
 		if (index==null) {

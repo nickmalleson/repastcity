@@ -23,13 +23,21 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -42,7 +50,6 @@ import repast.simphony.dataLoader.ContextBuilder;
 import repast.simphony.engine.environment.RunEnvironment;
 import repast.simphony.engine.schedule.ISchedule;
 import repast.simphony.engine.schedule.ScheduleParameters;
-import repast.simphony.parameter.Parameters;
 import repast.simphony.random.RandomHelper;
 import repast.simphony.space.gis.Geography;
 import repast.simphony.space.gis.GeographyParameters;
@@ -50,6 +57,7 @@ import repast.simphony.space.gis.SimpleAdder;
 import repast.simphony.space.graph.Network;
 import repast.simphony.space.graph.RepastEdge;
 import repastcity3.agent.AgentFactory;
+import repastcity3.agent.BurglaryWeights;
 import repastcity3.agent.IAgent;
 import repastcity3.agent.ThreadedAgentScheduler;
 import repastcity3.environment.Building;
@@ -68,22 +76,45 @@ import repastcity3.environment.contexts.RoadContext;
 import repastcity3.exceptions.AgentCreationException;
 import repastcity3.exceptions.EnvironmentError;
 import repastcity3.exceptions.NoIdentifierException;
-import repastcity3.exceptions.ParameterNotFoundException;
-import repast.simphony.engine.schedule.ScheduledMethod;
 
 public class ContextManager implements ContextBuilder<Object> {
 
-	
 	/*
 	 * A logger for this class. Note that there is a static block that is used to configure all logging for the model
 	 * (at the bottom of this file).
 	 */
-	private static Logger LOGGER = Logger.getLogger(ContextManager.class.getName());
+	private static Logger LOGGER;
+
+	/**
+	 * The logDir can be set by other classes (e.g a GA or main class) to specify a directory other than the root model
+	 * directory for log files.
+	 */
+	public static String logDir = null;
+
+
+	static {
+		
+		RepastCityLogging.dummy() ; // This causes the static initialisation block of logging to to be executed, setting up loggers 
+		
+		// Configure the logger for this class
+		LOGGER = Logger.getLogger(ContextManager.class.getName());
+
+		// Read in the model properties.
+		try {
+			readProperties();
+		} catch (IOException ex) {
+			throw new RuntimeException("Could not read model properties,  reason: " + ex.toString(), ex);
+		}
+
+	}
 
 	// Optionally force agent threading off (good for debugging)
 	private static final boolean TURN_OFF_THREADING = false;;
 
-	private static Properties properties;	
+	private static Properties properties;
+
+	/** An object to record the weights for burglary decisions for this model */
+	private static BurglaryWeights burglaryWeights;
 
 	/*
 	 * Pointers to contexts and projections (for convenience). Most of these can be made public, but the agent ones
@@ -96,7 +127,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	// building context and projection cab be public (thread safe) because buildings only queried
 	public static Context<Building> buildingContext;
 	public static Geography<Building> buildingProjection;
-	
+
 	public static Context<Community> communityContext;
 	public static Geography<Community> communityProjection;
 
@@ -107,26 +138,23 @@ public class ContextManager implements ContextBuilder<Object> {
 	public static Geography<Junction> junctionGeography;
 	public static Network<Junction> roadNetwork;
 
-	private static Context<IAgent> agentContext;
-	private static Geography<IAgent> agentGeography;
+	public static Context<IAgent> agentContext;
+	public static Geography<IAgent> agentGeography;
+
+	/**
+	 * Used by threads or other functions to indicate that an error has occurred to prevent normal model output results
+	 * being generated
+	 */
+	public static boolean error = false;
 
 	@Override
 	public Context<Object> build(Context<Object> con) {
-
-		RepastCityLogging.init();
 
 		// Keep a useful static link to the main context
 		mainContext = con;
 
 		// This is the name of the 'root'context
 		mainContext.setId(GlobalVars.CONTEXT_NAMES.MAIN_CONTEXT);
-
-		// Read in the model properties
-		try {
-			readProperties();
-		} catch (IOException ex) {
-			throw new RuntimeException("Could not read model properties,  reason: " + ex.toString(), ex);
-		}
 
 		// Configure the environment
 		String gisDataDir = ContextManager.getProperty(GlobalVars.GISDataDirectory);
@@ -159,7 +187,7 @@ public class ContextManager implements ContextBuilder<Object> {
 			mainContext.addSubContext(roadContext);
 			SpatialIndexManager.createIndex(roadProjection, Road.class);
 			LOGGER.log(Level.FINER, "Read " + roadContext.getObjects(Road.class).size() + " roads from " + roadFile);
-			
+
 			// Create the communities (OAs with OAC data).
 			communityContext = new CommunityContext();
 			communityProjection = GeographyFactoryFinder.createGeographyFactory(null).createGeography(
@@ -169,11 +197,39 @@ public class ContextManager implements ContextBuilder<Object> {
 			GISFunctions.readShapefile(Community.class, communityFile, communityProjection, communityContext);
 			mainContext.addSubContext(communityContext);
 			SpatialIndexManager.createIndex(communityProjection, Community.class);
-			LOGGER.log(Level.FINER, "Read " + communityContext.getObjects(Community.class).size() + " communities from " + communityFile);
-						
+
+			// Tell the buildings and communities about each other (not sure if it's quicker to search communities
+			// for buildings or the other way round
+			for (Community c : communityContext.getObjects(Community.class)) {
+				Geometry comGeom = ContextManager.communityProjection.getGeometry(c);
+				for (Building b : SpatialIndexManager.search(ContextManager.buildingProjection, comGeom)) {
+					// Examine geographies to see which buildings are actually within the community. Note:
+					// 'intersect' is used here because sometimes community boundaries cut through buildings.
+					// Hopefully this doesn't introduce much error.
+					if (ContextManager.buildingProjection.getGeometry(b).intersects(comGeom)) {
+						b.setCommunity(c);
+						c.addBuilding(b);
+					}
+				} // for buildings
+			} // for communities
+				// Check all buildings have a community
+			for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
+				if (b.getCommunity() == null) {
+					throw new EnvironmentError("The building " + b.toString() + " does not have a community.");
+				}
+			}
+			// // Some communities might not have buildings in them, so the check below is incorrect
+			// for (Community c:ContextManager.communityContext.getObjects(Community.class)) {
+			// if (c.getBuildings()==null || c.getBuildings().size()==0) {
+			// throw new EnvironmentError("The community "+c.toString()+" does not have any buildings.");
+			// }
+			// }
+
+			LOGGER.log(Level.FINER, "Read " + communityContext.getObjects(Community.class).size()
+					+ " communities from " + communityFile);
 
 			// Create road network
-			
+
 			// 1.junctionContext and junctionGeography
 			junctionContext = new JunctionContext();
 			mainContext.addSubContext(junctionContext);
@@ -208,7 +264,7 @@ public class ContextManager implements ContextBuilder<Object> {
 			return null;
 		}
 
-		// Now create the agents (note that their step methods are scheduled later
+		// Now create the agents (note that their step methods are scheduled later)
 		try {
 
 			agentContext = new AgentContext();
@@ -217,22 +273,26 @@ public class ContextManager implements ContextBuilder<Object> {
 					GlobalVars.CONTEXT_NAMES.AGENT_GEOGRAPHY, agentContext,
 					new GeographyParameters<IAgent>(new SimpleAdder<IAgent>()));
 
-//			String agentDefn = ContextManager.getParameter(MODEL_PARAMETERS.AGENT_DEFINITION.toString());
+			// String agentDefn = ContextManager.getParameter(MODEL_PARAMETERS.AGENT_DEFINITION.toString());
 			String agentDefn = getProperty(GlobalVars.AGENT_DEFINITION);
 			LOGGER.log(Level.INFO, "Creating agents with the agent definition: '" + agentDefn + "'");
 
 			AgentFactory agentFactory = new AgentFactory(agentDefn);
 			agentFactory.createAgents(agentContext);
 
-//		} catch (ParameterNotFoundException e) {
-//			LOGGER.log(Level.SEVERE, "Could not find the parameter which defines how agents should be "
-//					+ "created. The parameter is called " + MODEL_PARAMETERS.AGENT_DEFINITION
-//					+ " and should be added to the parameters.xml file.", e);
-//			return null;
+			// } catch (ParameterNotFoundException e) {
+			// LOGGER.log(Level.SEVERE, "Could not find the parameter which defines how agents should be "
+			// + "created. The parameter is called " + MODEL_PARAMETERS.AGENT_DEFINITION
+			// + " and should be added to the parameters.xml file.", e);
+			// return null;
 		} catch (AgentCreationException e) {
 			LOGGER.log(Level.SEVERE, "", e);
 			return null;
 		}
+
+		// Initialise the object that holds the weights applied to agent's burglary decisions. This is the
+		// default one and can be changed.
+		ContextManager.setBurglaryWeights(new BurglaryWeights());
 
 		// Create the schedule
 		createSchedule();
@@ -240,17 +300,19 @@ public class ContextManager implements ContextBuilder<Object> {
 		return mainContext;
 	}
 
-
 	private void createSchedule() {
 		ISchedule schedule = RunEnvironment.getInstance().getCurrentSchedule();
 
 		// Schedule something that outputs ticks every 1000 iterations.
 		schedule.schedule(ScheduleParameters.createRepeating(1, 1000, ScheduleParameters.LAST_PRIORITY), this,
 				"printTicks");
-		
+
 		// Schedule the time keeper (maintains a proper clock)
 		schedule.schedule(ScheduleParameters.createRepeating(1, 1, ScheduleParameters.LAST_PRIORITY), this,
 				"updateRealTime");
+
+		// Schedule a method to run at the end and generate some results
+		schedule.schedule(ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY), this, "generateResults");
 
 		/*
 		 * Schedule the agents. This is slightly complicated because if all the agents can be stepped at the same time
@@ -274,7 +336,8 @@ public class ContextManager implements ContextBuilder<Object> {
 			 * Agents can be threaded so the step scheduling not actually done by repast scheduler, a method in
 			 * ThreadedAgentScheduler is called which manually steps each agent.
 			 */
-			LOGGER.log(Level.INFO, "The multi-threaded scheduler will be used.");
+			LOGGER.log(Level.INFO, "The multi-threaded scheduler will be used. There are "
+					+ Runtime.getRuntime().availableProcessors() + " processors.");
 			ThreadedAgentScheduler s = new ThreadedAgentScheduler();
 			ScheduleParameters agentStepParams = ScheduleParameters.createRepeating(1, 1, 0);
 			schedule.schedule(agentStepParams, s, "agentStep");
@@ -288,25 +351,45 @@ public class ContextManager implements ContextBuilder<Object> {
 		}
 
 	}
-	
-	/** Stops the simulation. Attempts to call stop methods for GUI and if model is running programatically
-	 * or on NGS */
-	public static void haltSim() {
-		RunEnvironment.getInstance().endRun(); // stop sim us using gui
-		RepastCityMain.stopSim(); // stop sim if running programatically
-		//RepastCityMainMPJ.stopSim();	// stop sim if on NGS
+
+	// /** Stops the simulation. Attempts to call stop methods for GUI and if model is running programatically
+	// * or on NGS */
+	// public static void haltSim() {
+	// RunEnvironment.getInstance().endRun(); // stop sim us using gui
+	// RepastCityMain.stopSim(); // stop sim if running programatically
+	// //RepastCityMainMPJ.stopSim(); // stop sim if on NGS
+	// }
+
+	/**
+	 * Method scheduled to run at the end of the simulation and generates some results and other info.
+	 * 
+	 * @throws NoIdentifierException
+	 */
+	public void generateResults() throws NoIdentifierException {
+		if (ContextManager.error) {
+			LOGGER.info("An error occurred so ContextManager is not printing results.");
+			return;
+		}
+		// For info, print some statistics about houses
+		System.out.println("Printing information about houses.");
+		StringBuilder info = new StringBuilder();
+		info.append("BuildingID,TimesPassed,NumBurgD\n");
+		for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
+			info.append(b.getIdentifier() + "," + b.getTimesPassed() + "," + b.getNumBurglaries() + "," + "\n");
+		}
+		System.out.println(info.toString());
+
 	}
-	
 
 	/*
 	 * For creating a clock: A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a
 	 * method, called at every iteration, to update the variable.
-	 */	
+	 */
 	public static double realTime = 8.0; // (start at 8am)
 	public static int numberOfDays = 0; // It is also useful to count the number of days
-	
+
 	public void updateRealTime() {
-//		System.out.println("Time: "+RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+", "+realTime);
+		// System.out.println("Time: "+RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+", "+realTime);
 		realTime += (1.0 / 60.0); // Increase the time by one minute (a 60th of an hour)
 
 		if (realTime >= 24.0) { // If it's the end of a day then reset the time
@@ -315,62 +398,81 @@ public class ContextManager implements ContextBuilder<Object> {
 			LOGGER.log(Level.INFO, "Simulating day " + numberOfDays);
 		}
 	}
-	
-	/* Convenience methods for getting random numbers, using RandomHelper directly is not
-	 * thread safe. */
+
+	/*
+	 * Convenience methods for getting random numbers, using RandomHelper directly is not thread safe.
+	 */
 	private static Object randomLock = new Object(); // Lock to ensure only one thread accesses RandomHelper
-	
+
 	public static int nextIntFromTo(int a, int b) {
 		synchronized (ContextManager.randomLock) {
 			// This synchronized block ensures that only one agent at a time can access RandomHelper
-			return RandomHelper.nextIntFromTo(a,b);
+			return RandomHelper.nextIntFromTo(a, b);
 		}
 	}
+
 	public static double nextDouble() {
 		synchronized (ContextManager.randomLock) {
 			// This synchronized block ensures that only one agent at a time can access RandomHelper
 			return RandomHelper.nextDouble();
 		}
 	}
-	
-	
-	
 
-	private static long speedTimer = -1; // For recording time per N iterations 
+	public static double nextDoubleFromTo(double a, double b) {
+		synchronized (ContextManager.randomLock) {
+			// This synchronized block ensures that only one agent at a time can access RandomHelper
+			return RandomHelper.nextDoubleFromTo(a, b);
+		}
+	}
+
+	/**
+	 * Useful method that returns a random element from the list, using the <code>RandomHelper</code> to choose.
+	 * 
+	 * @param l
+	 *            The list from which to return an object
+	 * @see RandomHelper
+	 */
+	public static <T> T randomChoice(List<T> l) {
+		synchronized (ContextManager.randomLock) {
+			// This synchronized block ensures that only one agent at a time can access RandomHelper
+			return l.get(RandomHelper.nextIntFromTo(0, l.size() - 1));
+		}
+	}
+
+	private static long speedTimer = -1; // For recording time per N iterations
+
 	public void printTicks() {
-		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+
-				". Speed: "+((double)(System.currentTimeMillis()-ContextManager.speedTimer)/1000.0)+
-				"sec/ticks.");
+		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount() + ". Speed: "
+				+ ((double) (System.currentTimeMillis() - ContextManager.speedTimer) / 1000.0) + "sec/ticks.");
 		ContextManager.speedTimer = System.currentTimeMillis();
 	}
-	
-	
-// Have removed this because no longer using Simphony parameters. They don't work when running the simulation
+
+	// Have removed this because no longer using Simphony parameters. They don't work when running the simulation
 	// from the command line (!)
-//	/**
-//	 * Convenience function to get a Simphony parameter
-//	 * 
-//	 * @param <T>
-//	 *            The type of the parameter
-//	 * @param paramName
-//	 *            The name of the parameter
-//	 * @return The parameter.
-//	 * @throws ParameterNotFoundException
-//	 *             If the parameter could not be found.
-//	 */
-//	public static <V> V getParameter(String paramName) throws ParameterNotFoundException {
-//		Parameters p = RunEnvironment.getInstance().getParameters();
-//		Object val = p.getValue(paramName);
-//
-//		if (val == null) {
-//			throw new ParameterNotFoundException(paramName);
-//		}
-//
-//		// Try to cast the value and return it
-//		@SuppressWarnings("unchecked")
-//		V value = (V) val;
-//		return value;
-//	}
+	// /**
+	// * Convenience function to get a Simphony parameter
+	// *
+	// * @param <T>
+	// * The type of the parameter
+	// * @param paramName
+	// * The name of the parameter
+	// * @return The parameter.
+	// * @throws ParameterNotFoundException
+	// * If the parameter could not be found.
+	// */
+	// public static <V> V getParameter(String paramName) throws ParameterNotFoundException {
+	// Parameters p = RunEnvironment.getInstance().getParameters();
+	// Object val = p.getValue(paramName);
+	//
+	// if (val == null) {
+	// throw new ParameterNotFoundException(paramName);
+	// }
+	//
+	// // Try to cast the value and return it
+	// @SuppressWarnings("unchecked")
+	// V value = (V) val;
+	// return value;
+	// }
 
 	/**
 	 * Get the value of a property in the properties file. If the input is empty or null or if there is no property with
@@ -403,7 +505,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	private void readProperties() throws FileNotFoundException, IOException {
+	private static void readProperties() throws FileNotFoundException, IOException {
 
 		File propFile = new File("./repastcity.properties");
 		if (!propFile.exists()) {
@@ -557,6 +659,15 @@ public class ContextManager implements ContextBuilder<Object> {
 		LOGGER.log(Level.SEVERE, "ContextManager has been told to stop by " + clazz.getName(), ex);
 	}
 
+	public static void setBurglaryWeights(BurglaryWeights bw) {
+		ContextManager.burglaryWeights = bw;
+	}
+
+	/** Get the object that maintains the weights used in agent's burglary decisions */
+	public static BurglaryWeights getBurglaryWeights() {
+		return ContextManager.burglaryWeights;
+	}
+
 	/**
 	 * Move an agent by a vector. This method is required -- rather than giving agents direct access to the
 	 * agentGeography -- because when multiple threads are used they can interfere with each other and agents end up
@@ -646,7 +757,5 @@ public class ContextManager implements ContextBuilder<Object> {
 	public static Geography<IAgent> getAgentGeography() {
 		return ContextManager.agentGeography;
 	}
-	
-	
 
 }

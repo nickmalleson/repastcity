@@ -17,12 +17,14 @@ along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.*/
 package repastcity3.agent;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import com.vividsolutions.jts.geom.Geometry;
 
 import repast.simphony.context.Context;
 import repastcity3.environment.Building;
+import repastcity3.environment.Community;
 import repastcity3.environment.GISFunctions;
 import repastcity3.environment.SpatialIndexManager;
 import repastcity3.exceptions.AgentCreationException;
@@ -191,6 +193,7 @@ public class AgentFactory {
 				IAgent a = new DefaultAgent(); // Create a new agent
 				a.setHome(b); // Tell the agent where it lives
 				b.addAgent(a); // Tell the building that the agent lives there
+				AgentFactory.setCommunity(a); // Tell the agent in which Community it lives
 				ContextManager.addAgentToContext(a); // Add the agent to the context
 				// Finally move the agent to the place where it lives.
 				ContextManager.moveAgent(a, ContextManager.buildingProjection.getGeometry(b).getCentroid());
@@ -252,6 +255,7 @@ public class AgentFactory {
 				if (ContextManager.buildingProjection.getGeometry(b).contains(g)) {
 					b.addAgent(a);
 					a.setHome(b);
+					AgentFactory.setCommunity(a); // Tell the agent in which Community it lives
 				}
 			}
 		}
@@ -268,6 +272,22 @@ public class AgentFactory {
 
 	private void createAreaAgents(boolean dummy) throws AgentCreationException {
 		throw new AgentCreationException("Have not implemented the createAreaAgents method yet.");
+	}
+	
+	/* Convenience method to find the community an agent lives in in and store this information. Assumes the agent's Home
+	 * Building has already been set. Returns the Community as well. */
+	private static Community setCommunity (IAgent a) throws AgentCreationException {
+		Community c;
+		try {
+			c = SpatialIndexManager.findObjectAt(ContextManager.communityProjection, a.getHome().getCoords(), 
+					GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE.SMALL);
+		} catch (NoSuchElementException e) {
+			throw new AgentCreationException(e);
+		} catch (Exception e) {
+			throw new AgentCreationException(e);
+		}
+		a.setHomeCommunity(c);
+		return c;
 	}
 
 	/**

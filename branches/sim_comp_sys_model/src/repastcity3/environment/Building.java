@@ -43,6 +43,21 @@ public class Building implements FixedGeography, Identified {
 	 * them in sync with the projection.
 	 */
 	private Coordinate coords;
+	
+	/** The community that this building is within */
+	private Community community = null;
+	
+	/* Variables unique to burglary: describe different aspects of the environment..*/
+	private double accessibility = 0.5;
+	private double visibility = 0.5;
+	private double security = 0.5;
+//	protected double baseSecurity = 0.5; // Security returns to this level over time.
+//	private double trafficVolume = 0.5; // Trafic volume will vary depending on the time of day
+	
+	/* Some information about the buildings that can be built up as the simulation runs */
+	
+	private int numBurglaries = 0;
+	private int timesPassed = 0; // The number of times an agent passed this building looking for a burglary target
 
 	public Building() {
 		this.agents = new ArrayList<IAgent>();
@@ -79,6 +94,87 @@ public class Building implements FixedGeography, Identified {
 
 	public List<IAgent> getAgents() {
 		return this.agents;
+	}
+	
+	public Community getCommunity() {
+		return this.community;
+	}
+	
+	public void setCommunity(Community c) {
+		this.community = c;
+	}
+
+	public int getNumBurglaries() {
+		return numBurglaries;
+	}
+
+	public void incrementNumBurglaries() {
+		this.numBurglaries++;
+	}
+
+	
+
+	/* Get/set methods for physical parameters relevant to burglary. Note the short versions of
+	 * the function names to match the field names in the buildings shapefile */
+
+	public double getAccessibility() {
+		return accessibility;
+	}
+
+	public void setAccessibility(double accessibility) {
+		this.accessibility = accessibility;
+	}
+	public double getAcc() {
+		return accessibility;
+	}
+
+	public void setAcc(double accessibility) {
+		this.accessibility = accessibility;
+	}
+
+	public double getVisibility() {
+		return visibility;
+	}
+
+	public void setVis(double visibility) {
+		this.visibility = visibility;
+	}
+	
+	public double getVis() {
+		return visibility;
+	}
+
+	public void setVisibility(double visibility) {
+		this.visibility = visibility;
+	}
+
+	public double getSecurity() {
+		return security;
+	}
+
+	public void setSecurity(double security) {
+		this.security = security;
+	}
+	
+	public double getSec() {
+		return security;
+	}
+
+	public void setSec(double security) {
+		this.security = security;
+	}
+
+
+	/** Get the number of times an agent passed this building whilst looking for a burglary
+	 * target
+	 * @return
+	 */
+	public int getTimesPassed() {
+		return timesPassed;
+	}
+
+	public void incrementTimesPassed() {
+		this.timesPassed++;
 	}
 
 	@Override
