@@ -46,8 +46,14 @@ public abstract class GlobalVars {
 	public static final String BuildingShapefile = "BuildingShapefile";
 	public static final String RoadShapefile = "RoadShapefile";
 	public static final String CommunityShapefile = "CommunityShapefile";
+	public static final String AgentShapefile = "AgentShapefile";
 	public static final String BuildingsRoadsCoordsCache = "BuildingsRoadsCoordsCache";
 	public static final String BuildingsRoadsCache = "BuildingsRoadsCache";
+	
+	public static final String HouseData="HouseData";
+	public static final String CommunityData="CommunityData";
+	public static final String BurglaryPoints="BurglaryPoints";
+	public static final String AgentHomes="AgentHomes";
 	
 	
 	/** Name of the file for logging information messages) */
