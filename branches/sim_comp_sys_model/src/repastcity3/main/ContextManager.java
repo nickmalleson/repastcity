@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -115,6 +116,10 @@ public class ContextManager implements ContextBuilder<Object> {
 
 	/** An object to record the weights for burglary decisions for this model */
 	private static BurglaryWeights burglaryWeights;
+	
+	/** An object to generate and organise the results of a simulation. The results.generateResults() function is
+	 * scheduled to be called at the end of the simulation. */
+	private static Results results = new Results(); 
 
 	/*
 	 * Pointers to contexts and projections (for convenience). Most of these can be made public, but the agent ones
@@ -312,7 +317,7 @@ public class ContextManager implements ContextBuilder<Object> {
 				"updateRealTime");
 
 		// Schedule a method to run at the end and generate some results
-		schedule.schedule(ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY), this, "generateResults");
+		schedule.schedule(ScheduleParameters.createAtEnd(ScheduleParameters.LAST_PRIORITY), ContextManager.results, "generateResults");
 
 		/*
 		 * Schedule the agents. This is slightly complicated because if all the agents can be stepped at the same time
@@ -360,26 +365,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	// //RepastCityMainMPJ.stopSim(); // stop sim if on NGS
 	// }
 
-	/**
-	 * Method scheduled to run at the end of the simulation and generates some results and other info.
-	 * 
-	 * @throws NoIdentifierException
-	 */
-	public void generateResults() throws NoIdentifierException {
-		if (ContextManager.error) {
-			LOGGER.info("An error occurred so ContextManager is not printing results.");
-			return;
-		}
-		// For info, print some statistics about houses
-		System.out.println("Printing information about houses.");
-		StringBuilder info = new StringBuilder();
-		info.append("BuildingID,TimesPassed,NumBurgD\n");
-		for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
-			info.append(b.getIdentifier() + "," + b.getTimesPassed() + "," + b.getNumBurglaries() + "," + "\n");
-		}
-		System.out.println(info.toString());
 
-	}
 
 	/*
 	 * For creating a clock: A variable to represent the real time in decimal hours (e.g. 14.5 means 2:30pm) and a
@@ -387,7 +373,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	 */
 	public static double realTime = 8.0; // (start at 8am)
 	public static int numberOfDays = 0; // It is also useful to count the number of days
-
+	
 	public void updateRealTime() {
 		// System.out.println("Time: "+RunEnvironment.getInstance().getCurrentSchedule().getTickCount()+", "+realTime);
 		realTime += (1.0 / 60.0); // Increase the time by one minute (a 60th of an hour)
@@ -395,9 +381,11 @@ public class ContextManager implements ContextBuilder<Object> {
 		if (realTime >= 24.0) { // If it's the end of a day then reset the time
 			realTime = 0.0;
 			numberOfDays++; // Also increment our day counter
+			// Print some information about memory, time taken, etc.
 			LOGGER.log(Level.INFO, "Simulating day " + numberOfDays);
 		}
 	}
+	
 
 	/*
 	 * Convenience methods for getting random numbers, using RandomHelper directly is not thread safe.
@@ -440,10 +428,15 @@ public class ContextManager implements ContextBuilder<Object> {
 	}
 
 	private static long speedTimer = -1; // For recording time per N iterations
-
+	DecimalFormat memFormatter = new DecimalFormat("###,###"); // For printing memory nicely
 	public void printTicks() {
 		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount() + ". Speed: "
-				+ ((double) (System.currentTimeMillis() - ContextManager.speedTimer) / 1000.0) + "sec/ticks.");
+				+ ((double) (System.currentTimeMillis() - ContextManager.speedTimer) / 1000.0) + "sec/ticks."
+				+ ". Memory (used/max/free): "+
+					memFormatter.format((int)Runtime.getRuntime().totalMemory()/1000000)+"Mb/"+
+					memFormatter.format((int)Runtime.getRuntime().maxMemory()/1000000)+"Mb/"+
+					memFormatter.format((int)Runtime.getRuntime().freeMemory()/1000000)+"Mb)."
+				);
 		ContextManager.speedTimer = System.currentTimeMillis();
 	}
 
@@ -637,6 +630,14 @@ public class ContextManager implements ContextBuilder<Object> {
 		return size;
 	}
 
+	/**
+	 * Get the results object that has been organising the results of this simulation.
+	 * @return
+	 */
+	public static Results getResults() {
+		return ContextManager.results;
+	}
+	
 	/**
 	 * Checks that the given <code>Context</code>s have more than zero objects in them
 	 * 

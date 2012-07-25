@@ -30,7 +30,7 @@ public class Building implements FixedGeography, Identified {
 	private static Logger LOGGER = Logger.getLogger(Building.class.getName());
 	
 	/** A list of agents who live here */
-	private List<IAgent> agents;
+	private List<IAgent> agents = new ArrayList<IAgent>();
 
 	/**
 	 * A unique identifier for buildings, usually set from the 'identifier' column in a shapefile
@@ -60,7 +60,7 @@ public class Building implements FixedGeography, Identified {
 	private int timesPassed = 0; // The number of times an agent passed this building looking for a burglary target
 
 	public Building() {
-		this.agents = new ArrayList<IAgent>();
+		
 	}
 
 	@Override

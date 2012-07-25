@@ -90,4 +90,10 @@ public interface IAgent {
 	List<String> getTransportAvailable();
 	
 	
+	/**
+	 * Each agent will have a unique identifier assigned when the object is created.
+	 * @return
+	 */
+	int getID(); 
+	
 }

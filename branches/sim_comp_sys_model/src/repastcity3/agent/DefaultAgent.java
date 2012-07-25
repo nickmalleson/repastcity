@@ -29,20 +29,24 @@ import java.util.logging.Logger;
 import com.vividsolutions.jts.geom.Point;
 import com.vividsolutions.jts.operation.distance.DistanceOp;
 
-import repast.simphony.dataLoader.ContextCreator;
+import repast.simphony.engine.environment.RunEnvironment;
 import repastcity3.environment.Building;
 import repastcity3.environment.Community;
 import repastcity3.environment.Route;
 import repastcity3.environment.SpatialIndexManager;
+import repastcity3.exceptions.NoIdentifierException;
 import repastcity3.main.ContextManager;
 import repastcity3.main.Functions;
 import repastcity3.main.GlobalVars;
-import repastcity3.main.GlobalVars.GEOGRAPHY_PARAMS.BUFFER_DISTANCE;
 
 // TODO: rename to 'DumbBurglar' (and also change BurglarFactory because random method only creates DefaultAgent..)
 public class DefaultAgent implements IAgent {
 
 	private static Logger LOGGER = Logger.getLogger(DefaultAgent.class.getName());
+	
+	// A variable used to represent how motivated the agent is. This can increase as the agent becomes more
+	// desperate for burglary but at the moment it is left static
+	private final double motiveIntensity = 0.3;
 
 	private Building home; // The building where the agent lives
 	private Community community; // The community where the agent lives
@@ -62,7 +66,8 @@ public class DefaultAgent implements IAgent {
 	private Building targetHouse = null; // The house within the target area to actually travel to
 
 	private static int uniqueID = 0;
-	private int id;
+	private int id; // An auto-generated numerical id for agents who do not have an identifier read in from GIS data
+	private String identifier = null; // An identifier read in from data (same as buildings and roads).
 
 	/** The state of the agent */
 	enum AGENT_STATE {
@@ -150,7 +155,9 @@ public class DefaultAgent implements IAgent {
 				}
 				else { // Successful burglary. Store some info and then now go home.
 					victim.incrementNumBurglaries(); // Tell the building that it has been burgled
-					this.burgledBuildings.add(victim); // Remember that the burglar burgled the house
+					this.burgledBuildings.add(victim); // Remember that the burglar burgled the house - (not sure if this is still necessary now that results are stoorde in Results object)
+					ContextManager.getResults().saveBurglaryInfo(this, 
+							(int)RunEnvironment.getInstance().getCurrentSchedule().getTickCount(), ContextManager.realTime, victim);
 					
 					this.currentState = AGENT_STATE.TRAVELLING_HOME;
 					this.route = new Route(this, this.home.getCoords(), this.home);
@@ -288,9 +295,8 @@ public class DefaultAgent implements IAgent {
 			currentAttract += sortedCommunityParams[i][0]; // index 0 stores the overall attractivenss
 			if (roulette < currentAttract) {
 				Community c = communities[(int)(sortedCommunityParams[i][1])]; // Remember this element stores original index 
-				System.out.println("TargetChooser.chooseTarget() for burglar '"+this.toString()+"' found "+
-						"most attractive community to travel to: "+c);
-//				System.out.println("Chosen communiy is: "+c.toString()+" ("+i+"/"+sortedCommunityParams.length+") with overall attractiveness: "+sortedCommunityParams[i][0]);
+				LOGGER.fine("TargetChooser.chooseTarget() for burglar '"+this.toString()+"' found "+
+						"most attractive community to travel to: "+c.toString()+" with overall attractiveness: "+sortedCommunityParams[i][0]);
 				return c;
 			}
 		}
@@ -342,9 +348,8 @@ public class DefaultAgent implements IAgent {
 	 */
 	private Building chooseVictim(List<Building> passedBuildings) {
 		
-		// TODO: account for motive intensity properly. At the moment it's a random variable
 //		double motiveIntensity = this.burglar.getActionGuidingMotive().getIntensity();
-		double motiveIntensity = ContextManager.nextDoubleFromTo(0, 0.3);
+//		double motiveIntensity = ContextManager.nextDoubleFromTo(0, 0.3);
 		
 		BurglaryWeights bw = ContextManager.getBurglaryWeights(); // Weights applied to each building parameter
 		
@@ -375,10 +380,10 @@ public class DefaultAgent implements IAgent {
 //					( ce_w + tv_w + occ_w + acc_w + vis_w + sec_w );
 
 				// Do *not* burgle if suitability > motive intensity
-				if (motiveIntensity > suitability ) { 
+				if (this.motiveIntensity > suitability ) { 
 					// House is suitable, now see if a burglary is going to occur (include random component, greater
 					// probability the greater the difference between suitability and motive intensity)
-					double difference = motiveIntensity - suitability;
+					double difference = this.motiveIntensity - suitability;
 					double prob = Math.pow(difference, 3); // exponential probability
 					if (prob > ContextManager.nextDouble()) {
 						LOGGER.log(Level.FINE, 
@@ -391,7 +396,7 @@ public class DefaultAgent implements IAgent {
 								"\n\tvis: "+vis+" w: "+bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.VIS_W)+
 								"\n\tsec: "+sec+" w: "+ bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.SEC_W)+
 								"\n\tsuitability: "+suitability+
-								"\n\tmotive intensity: "+motiveIntensity+
+								"\n\tmotive intensity: "+this.motiveIntensity+
 								"\n\tprobability difference: "+difference);
 						return h;
 					} // if prob > random
@@ -470,7 +475,35 @@ public class DefaultAgent implements IAgent {
 
 	@Override
 	public String toString() {
-		return "Agent " + this.id;
+		return "Agent " + this.getIdentifier();
+	}
+	
+	/**
+	 * Get the agent's unique auto-generated ID number. This is created by this class when objects are created, not
+	 * set by any data. It's useful for distinguishing between different agents but not really any good for
+	 * identifying them externally, e.g. in results. The <code>getIdentifier()</code> function can be used to
+	 * give agents IDs that relate to real data.
+	 * @see getIdentifier()
+	 */
+	public int getID() {
+		return this.id;
+	}
+	
+	/**
+	 * Return the agent's unique identifier. This can be set when reading in data from a point shapefile. If this is
+	 * null (e.g. when agents are created randomly) then the agent's auto-generated unique ID is returned instead
+	 * (see <code>getID()</code>). 
+	 * @return
+	 */
+	public String getIdentifier() {
+		if (this.identifier == null) {
+			this.identifier = String.valueOf(this.id);
+		}
+		return this.identifier;
+	}
+	
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
 	}
 
 	@Override

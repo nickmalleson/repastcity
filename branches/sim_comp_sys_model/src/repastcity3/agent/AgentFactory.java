@@ -16,11 +16,18 @@ along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.*/
 
 package repastcity3.agent;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.operation.distance.DistanceOp;
 
 import repast.simphony.context.Context;
 import repastcity3.environment.Building;
@@ -68,7 +75,8 @@ import repastcity3.main.GlobalVars;
  * </pre>
  * 
  * Create agents from the given point shapefile (one agent per point). If a point in the agent shapefile is within a
- * building object then the agent's home will be set to that building. The type of the agent can be given in two ways:
+ * building object then the agent's home will be set to that building, otherwise the agent will be snapped to the 
+ * nearest building. The type of the agent can be given in two ways:
  * <ol>
  * <li>The 'agent_class' parameter can be used - this is the fully qualified (e.g. including package) name of a class
  * that will be used to create all the agents. For example the following will create instances of <code>MyAgent</code>
@@ -248,17 +256,50 @@ public class AgentFactory {
 
 		// Assign agents to houses
 		int numAgents = 0;
-		for (IAgent a : ContextManager.getAllAgents()) {
+		for (IAgent agent : ContextManager.getAllAgents()) {
 			numAgents++;
-			Geometry g = ContextManager.getAgentGeometry(a);
-			for (Building b : SpatialIndexManager.search(ContextManager.buildingProjection, g)) {
-				if (ContextManager.buildingProjection.getGeometry(b).contains(g)) {
-					b.addAgent(a);
-					a.setHome(b);
-					AgentFactory.setCommunity(a); // Tell the agent in which Community it lives
+			boolean foundHouse = false;
+			Geometry agentGeom = ContextManager.getAgentGeometry(agent);
+			for (Building b : SpatialIndexManager.search(ContextManager.buildingProjection, agentGeom)) {
+				if (ContextManager.buildingProjection.getGeometry(b).contains(agentGeom)) { // See if agent is within the building
+					b.addAgent(agent);
+					agent.setHome(b);
+					AgentFactory.setCommunity(agent); // Tell the agent in which Community it lives
+					foundHouse = true;
+					break;
+				} // if
+			} // for buildings
+			if (!foundHouse) { // Agent wasn't within a house, find the nearest non-occupied house
+				Map<Building, Double> houseDists = new HashMap<Building, Double>();
+				for (Building b:SpatialIndexManager.search(ContextManager.buildingProjection, agentGeom)){
+					double dist = DistanceOp.distance(agentGeom, ContextManager.buildingProjection.getGeometry(b));
+					houseDists.put(b, dist);
 				}
-			}
-		}
+				// Sory the buildings by distance (the map value)
+				ValueComparator bvc =  new ValueComparator(houseDists);
+		        @SuppressWarnings("rawtypes") // ?
+				TreeMap<Building,Double> sorted_map = new TreeMap(bvc);
+		        sorted_map.putAll(houseDists);
+		        System.out.println("XXXX "+agent.toString()+" - "+sorted_map.toString());
+		        System.out.println("YYYY "+SpatialIndexManager.search(ContextManager.buildingProjection, agentGeom).toString());
+		        // GO through the sorted map looking for unoccuppied houses
+		        for (Entry<Building, Double> entry:sorted_map.entrySet()) {
+		        	Building b = entry.getKey(); 
+		        	if (b.getAgents().size() == 0) {
+						b.addAgent(agent);
+						agent.setHome(b);
+						ContextManager.agentGeography.move(agent, ContextManager.buildingProjection.getGeometry(b));
+						AgentFactory.setCommunity(agent); // Tell the agent in which Community it lives
+						foundHouse = true;
+						break;
+		        	} // if no agents
+		        } // for buildings
+		        if (!foundHouse) { // Still no house for the agent!
+					throw new AgentCreationException("Could not find an unoccuppied house for agent "+agent.toString()+
+							". The houses (and their distances from the agent) were: "+sorted_map.toString());
+		        }
+			} // if !foundHouse
+		} // for agents
 
 		if (singleType) {
 			LOGGER.info("Have created " + numAgents + " of type " + clazz.getName().toString() + " from file "
@@ -348,5 +389,36 @@ public class AgentFactory {
 			void createagents(boolean dummy, AgentFactory af) throws AgentCreationException;
 		}
 	}
+
+	/**
+	 * For comparing values of map elements. From
+	 * http://stackoverflow.com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
+	 */
+	class ValueComparator implements Comparator<Double> {
+
+		Map<?, Double> base;
+
+		public ValueComparator(Map<?, Double> base) {
+			this.base = base;
+		}
+
+		public int compare(Double a, Double b) {
+
+			if (base.get(a) < base.get(b)) {
+				return 1;
+			} else if (base.get(a) == base.get(b)) {
+				return 0;
+			} else {
+				return -1;
+			}
+
+			/*
+			 * or like this tested
+			 * 
+			 * return ((Double)base.get(a)).compareTo((Double)base.get(b));
+			 */
+
+		}
+	} // ValueComparator class
 
 }
