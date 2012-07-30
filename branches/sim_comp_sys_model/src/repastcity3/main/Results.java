@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.python.modules.synchronize;
@@ -16,6 +17,7 @@ import repastcity3.agent.IAgent;
 import repastcity3.environment.Building;
 import repastcity3.environment.Community;
 import repastcity3.exceptions.NoIdentifierException;
+import uk.ac.leeds.mass.fmf.fit_statistics.GOF_TEST;
 
 /**
  * Class is used to organise and output the results of the simulation. 
@@ -52,8 +54,17 @@ public class Results {
 			return;
 		}
 		
+		// Results will be put into a directory which has this model's name. It will have already been created
+		// by the context creator.
+		String modelDir = ContextManager.modelName+"/";
+		File dir = new File(modelDir); 
+		if (! (dir.exists() && dir.isDirectory()) ) {
+			throw new IOException("The directory to store results in ("+dir.getAbsolutePath()+") does not exist.");
+		}
+		LOGGER.fine("Results will go into the directory "+modelDir);
+		
 		/* Print information about individual houses */
-		File f = new File(ContextManager.getProperty(GlobalVars.HouseData));
+		File f = new File(modelDir+ContextManager.getProperty(GlobalVars.HouseData));
 		BufferedWriter bw = new BufferedWriter(new FileWriter(f));
 		LOGGER.info(" ***** GENERATING RESULTS ***** ");
 		LOGGER.info("\tInformation about houses to file "+f.getAbsolutePath());
@@ -75,7 +86,7 @@ public class Results {
 		bw.close();
 		
 		/* Print information about communities */
-		f = new File(ContextManager.getProperty(GlobalVars.CommunityData));
+		f = new File(modelDir+ContextManager.getProperty(GlobalVars.CommunityData));
 		bw = new BufferedWriter(new FileWriter(f));
 		LOGGER.info("\tInformation about communities to file "+f.getAbsolutePath());
 		
@@ -109,7 +120,7 @@ public class Results {
 		
 		/* Print individual burglary points */
 		
-		f = new File(ContextManager.getProperty(GlobalVars.BurglaryPoints));
+		f = new File(modelDir+ContextManager.getProperty(GlobalVars.BurglaryPoints));
 		bw = new BufferedWriter(new FileWriter(f));
 		LOGGER.info("\tInformation about burglaries to file "+f.getAbsolutePath());
 		
@@ -134,7 +145,7 @@ public class Results {
 		
 		
 		/* Print info about agent's homes (the points where they live)*/
-		f = new File(ContextManager.getProperty(GlobalVars.AgentHomes));
+		f = new File(modelDir+ContextManager.getProperty(GlobalVars.AgentHomes));
 		bw = new BufferedWriter(new FileWriter(f));
 		LOGGER.info("\tInformation about burglar's homes to file "+f.getAbsolutePath());
 		
@@ -156,6 +167,18 @@ public class Results {
 		
 		LOGGER.info(" ***** FINISHED RESULTS ***** ");
 		
+	}
+	
+	
+	/**
+	 * 
+	 * @param test
+	 * @param expectedData
+	 * @return
+	 */
+	public double calculateError(GOF_TEST test, Map<String,Double> expectedData) {
+		
+		return -1;
 	}
 	
 	
