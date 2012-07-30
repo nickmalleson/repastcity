@@ -24,21 +24,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
@@ -92,13 +87,32 @@ public class ContextManager implements ContextBuilder<Object> {
 	 */
 	public static String logDir = null;
 
+	/** A name for this model run which should be unique (based on the current system time). */
+	public static String modelName = null; 
 
 	static {
 		
-		RepastCityLogging.dummy() ; // This causes the static initialisation block of logging to to be executed, setting up loggers 
+		// Give this run a unique name based on the current time and the current random seed. This has to be done
+		// here because the name of the model is required by the logger (initialised below).
+		if (modelName == null) { // If not null then something else has already set this model's name
+			Calendar calendar = new GregorianCalendar();
+			ContextManager.modelName = "model-"+calendar.get(Calendar.YEAR)+"_"+(calendar.get(Calendar.MONTH)+1)+"_"+
+				calendar.get(Calendar.DATE)+"-"+calendar.get(Calendar.HOUR_OF_DAY)+"_"+
+				calendar.get(Calendar.MINUTE)+"_"+calendar.get(Calendar.SECOND)+"-"+RandomHelper.getSeed(); 
+		}
+		
+		// Also create a directory for results, logs etc to go in to.
+		File dir = new File(ContextManager.modelName);
+		dir.mkdirs();
+		ContextManager.logDir = ContextManager.modelName+"/"; // logDir will be read by the Logger class
+		
+		// This causes the static initialisation block of logging to to be executed, setting up loggers:
+		RepastCityLogging.dummy() ;  
 		
 		// Configure the logger for this class
 		LOGGER = Logger.getLogger(ContextManager.class.getName());
+		
+		LOGGER.log(Level.FINE, "The name for this model run is "+ContextManager.modelName);
 
 		// Read in the model properties.
 		try {
@@ -120,6 +134,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	/** An object to generate and organise the results of a simulation. The results.generateResults() function is
 	 * scheduled to be called at the end of the simulation. */
 	private static Results results = new Results(); 
+
 
 	/*
 	 * Pointers to contexts and projections (for convenience). Most of these can be made public, but the agent ones
@@ -157,7 +172,7 @@ public class ContextManager implements ContextBuilder<Object> {
 
 		// Keep a useful static link to the main context
 		mainContext = con;
-
+		
 		// This is the name of the 'root'context
 		mainContext.setId(GlobalVars.CONTEXT_NAMES.MAIN_CONTEXT);
 

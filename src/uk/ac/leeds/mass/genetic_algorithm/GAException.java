@@ -15,13 +15,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with RepastCity.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-package repastcity3.environment;
+package uk.ac.leeds.mass.genetic_algorithm;
 
 /**
- * Represent an area/neighbourhood/community.
+ * En exception class to encompass problems running a GA.
  * @author Nick Malleson
  */
-public class Area {
+public class GAException extends Exception {
 
+
+	private static final long serialVersionUID = 8258152680029662039L;
+
+	public GAException(String message) {
+        super(message);
+    }
+
+    public GAException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
