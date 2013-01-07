@@ -41,6 +41,13 @@ public abstract class GlobalVars {
 	 * can be ended if necessary (the runner takes control of the scheduling). */
 	public static RepastCityRunner RUNNER = null;
 	
+	/** A name for the model, can be used to distinguish different runs. */
+	public static String MODEL_NAME = null;
+	
+	/** A directory for log files for this model */
+	public static String LOG_DIR = null; 
+	
+	
 	/* These are strings that match entries in the repastcity.properties file.*/
 	public static final String GISDataDirectory = "GISDataDirectory";
 	public static final String BuildingShapefile = "BuildingShapefile";
@@ -49,11 +56,12 @@ public abstract class GlobalVars {
 	public static final String AgentShapefile = "AgentShapefile";
 	public static final String BuildingsRoadsCoordsCache = "BuildingsRoadsCoordsCache";
 	public static final String BuildingsRoadsCache = "BuildingsRoadsCache";
-	
+		
 	public static final String HouseData="HouseData";
 	public static final String CommunityData="CommunityData";
 	public static final String BurglaryPoints="BurglaryPoints";
 	public static final String AgentHomes="AgentHomes";
+	public static final String MetaData="MetaData";
 	
 	
 	/** Name of the file for logging information messages) */

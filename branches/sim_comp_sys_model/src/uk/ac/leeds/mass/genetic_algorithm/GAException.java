@@ -23,7 +23,6 @@ package uk.ac.leeds.mass.genetic_algorithm;
  */
 public class GAException extends Exception {
 
-
 	private static final long serialVersionUID = 8258152680029662039L;
 
 	public GAException(String message) {
@@ -32,5 +31,9 @@ public class GAException extends Exception {
 
     public GAException(String message, Throwable cause) {
         super(message, cause);
+    }
+    
+    public String toString() {
+    	return super.toString();
     }
 }

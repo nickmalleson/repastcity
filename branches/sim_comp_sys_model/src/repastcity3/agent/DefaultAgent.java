@@ -1,5 +1,4 @@
 /*
-©Copyright 2012 Nick Malleson
 This file is part of RepastCity.
 
 RepastCity is free software: you can redistribute it and/or modify
@@ -34,7 +33,6 @@ import repastcity3.environment.Building;
 import repastcity3.environment.Community;
 import repastcity3.environment.Route;
 import repastcity3.environment.SpatialIndexManager;
-import repastcity3.exceptions.NoIdentifierException;
 import repastcity3.main.ContextManager;
 import repastcity3.main.Functions;
 import repastcity3.main.GlobalVars;
@@ -322,12 +320,12 @@ public class DefaultAgent implements IAgent {
 	 * From the List of given houses see if any are suitable burglary victims.
 	 * <P>The following variables are used in the calculation:</P>
 	 * <ol>
-	 * <li>ce - collective efficacy of the community. NOT CURRENTLY USED</li>
+	 * <li>ce - collective efficacy of the community.</li>
 	 * <li>occ - occupancy levels of the community. NOT CURRENTLY USED</li>
 	 * <li>acc - accessibility of the house</li>
 	 * <li>vis - visibility of the house</li>
-	 * <li>sec - security of the house</li>
-	 * <li>tv - traffic volume on the road next to the house (a house variable)</li>
+	 * <li>sec - security of the house. NOT CURRENTLY USED</li>
+	 * <li>tv - traffic volume on the road next to the house (a house variable). NOT CURRENTLY USED</li>
 	 * <li>ce_w - the weight, specific to the burglar applied to the collective efficacy variable</li>
 	 * <li>tv_w</li>
 	 * <li>occ_w</li>
@@ -358,24 +356,23 @@ public class DefaultAgent implements IAgent {
 			h = passedBuildings.get(i); c = h.getCommunity();
 			if (!h.equals(this.getHome())) {
 				double ce = c.getCollectiveEfficacy();
-				//			double tv = c.getTrafficVolume(GlobalVars.time);
 //				double occ = s.getOccupancy(GlobalVars.time);
-				// TODO XXXX should this be -accessibility, because high accessibility is good for burglar?
-				double acc = h.getAccessibility(); 
+				double acc = h.getAccessibility(); // TODO XXXX should this be -accessibility, because high accessibility is good for burglar?
 				double vis = h.getVisibility();
-				double sec = h.getSecurity();
+//				double sec = h.getSecurity();
 //				double tv = h.getTrafficVolume(GlobalVars.time);
 				double ce_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.CE_W);
-				double tv_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.TV_W);
-				double occ_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.OCC_W);
+//				double occ_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.OCC_W);
 				double acc_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.ACC_W);
 				double vis_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.VIS_W);
-				double sec_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.SEC_W);
+//				double sec_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.SEC_W);
+//				double tv_w = bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.TV_W);
 				// See BurglarAgents.docx for definition of suitability. Low suitability value here means house is
-				// very suitable for burglary.
+				// very suitable for burglary. This should really be renamed 'risk' or something similar
 				double suitability =
-					( ce*ce_w + acc*acc_w + vis*vis_w + sec*sec_w ) /
-					( ce_w + tv_w + occ_w + acc_w + vis_w + sec_w );
+					( ce*ce_w + acc*acc_w + vis*vis_w ) /
+					( ce_w + acc_w + vis_w  );
+				
 //					( ce*ce_w + tv*tv_w + occ*occ_w + acc*acc_w + vis*vis_w + sec*sec_w ) /
 //					( ce_w + tv_w + occ_w + acc_w + vis_w + sec_w );
 
@@ -394,7 +391,7 @@ public class DefaultAgent implements IAgent {
 //								"\n\tocc: "+occ+" w: "+bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.OCC_W)+
 								"\n\tacc: "+acc+" w: "+bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.ACC_W)+
 								"\n\tvis: "+vis+" w: "+bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.VIS_W)+
-								"\n\tsec: "+sec+" w: "+ bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.SEC_W)+
+//								"\n\tsec: "+sec+" w: "+ bw.getWeight(BurglaryWeights.BURGLARY_WEIGHTS.SEC_W)+
 								"\n\tsuitability: "+suitability+
 								"\n\tmotive intensity: "+this.motiveIntensity+
 								"\n\tprobability difference: "+difference);

@@ -1,6 +1,6 @@
 export REPASTHOME=/Applications/Repast-Simphony-2.0.0-beta/eclipse/plugins/
 
-java -server -Xss10M -Xmx600M -Xms400M -cp ..:../bin/:\
+java -server -Xss10M -Xmx1G -Xms400M -Xrunhprof:heap=sites,depth=20 -cp ..:../bin/:\
 $REPASTHOME/repast.simphony.runtime_2.0.0/bin:\
 $REPASTHOME/repast.simphony.runtime_2.0.0/lib/*:\
 $REPASTHOME/repast.simphony.core_2.0.0/lib/*:\

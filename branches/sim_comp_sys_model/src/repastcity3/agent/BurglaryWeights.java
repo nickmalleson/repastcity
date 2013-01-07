@@ -1,16 +1,20 @@
 package repastcity3.agent;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
 /** 
  * A class to store the values of the different weights that influence the aspects of a burglar's burglary decision.
+ * <P>Needs to implement <code>Serializable</code> because these weights might be passed around as MPJ messages in a GA.</P> 
  * 
  * @author nick
  * @see BURGLARY_WEIGHTS
  *
  */
-public class BurglaryWeights {
+public class BurglaryWeights implements Serializable {
+	
+	private static final long serialVersionUID = 2174795935164367455L;
 	
 	// Store the values of each weight
 	Map<BURGLARY_WEIGHTS, Double> weightMap = new HashMap<BURGLARY_WEIGHTS, Double>(BURGLARY_WEIGHTS.values().length);
@@ -47,7 +51,7 @@ public class BurglaryWeights {
 	 * @author nick
 	 *
 	 */
-	enum BURGLARY_WEIGHTS {
+	public enum BURGLARY_WEIGHTS {
 
 		// Weights for choosing targets to travel to
 		
@@ -65,15 +69,15 @@ public class BurglaryWeights {
 		/** Collective efficacy of the community the house is in */
 		CE_W,
 		/** Traffic volume of the community */
-		TV_W, 
+//		TV_W, 
 		/** Occupancy levels in the community */
-		OCC_W, 
+//		OCC_W, 
 		/** Accessibility of the house */
 		ACC_W, 
 		/** Visibility of the house */
 		VIS_W, 
 		/** Security of the house */
-		SEC_W; 
+//		SEC_W; 
 		
 	}
 

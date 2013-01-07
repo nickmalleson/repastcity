@@ -26,7 +26,10 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import repast.simphony.space.gis.Geography;
+import repastcity3.exceptions.EnvironmentError;
+import repastcity3.main.ContextManager;
 import repastcity3.main.GlobalVars;
+import repastcity3.main.Resetable;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -46,7 +49,7 @@ import com.vividsolutions.jts.operation.distance.DistanceOp;
  * @see SpatialIndex
  * @see STRtree
  */
-public abstract class SpatialIndexManager implements Cacheable {
+public abstract class SpatialIndexManager {
 	
 	// Link spatial indices to their geographies.
 	private static Map<Geography<?>, Index<?>> indices = new HashMap<Geography<?>, Index<?>>();
@@ -56,9 +59,14 @@ public abstract class SpatialIndexManager implements Cacheable {
 	 * @param geog 
 	 * @param clazz The class of the objects that are being stored in the geography.
 	 * @param <T> The type of object stored in the geography.
+	 * @throws EnvironmentError if the geography already has a spatial index.
 	 */
-	public static <T> void createIndex(Geography<T> geog, Class<T> clazz) {
+	public static <T> void createIndex(Geography<T> geog, Class<T> clazz) throws EnvironmentError {		
 		Index<T> i = new Index<T>(geog, clazz);
+		// See if the geography already has an index
+		if (indices.containsKey(geog)) {
+			throw new EnvironmentError("The geography "+geog.toString()+" already has a spatial index.");
+		}
 		SpatialIndexManager.indices.put(geog, i);
 	}
 	
@@ -226,10 +234,11 @@ public abstract class SpatialIndexManager implements Cacheable {
 		return indices.containsKey(geog);
 	}
 
-	@Override
-	public void clearCaches() {
-		indices.clear();
+	public static void clearIndices() {
+		SpatialIndexManager.indices.clear();
+		SpatialIndexManager.indices = new HashMap<Geography<?>, Index<?>>(); // (probably not necessary)
 	}
+	
 }
 
 /**
