@@ -29,14 +29,16 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 import repastcity3.exceptions.DuplicateIdentifierException;
 import repastcity3.exceptions.NoIdentifierException;
+import repastcity3.main.ContextManager;
 import repastcity3.main.GlobalVars;
+import repastcity3.main.Resetable;
 
 /**
  * Represents road objects.
  * 
  * @author Nick Malleson
  */
-public class Road implements FixedGeography, Identified {
+public class Road implements FixedGeography, Identified, Resetable {
 
 	private static Logger LOGGER = Logger.getLogger(Road.class.getName());
 
@@ -82,6 +84,7 @@ public class Road implements FixedGeography, Identified {
 
 	public Road() {
 		this.junctions = new ArrayList<Junction>();
+		ContextManager.addToResetableList(this);
 	}
 
 	/**
@@ -267,5 +270,12 @@ public class Road implements FixedGeography, Identified {
 					"reading a shapefile that doesn't have a string column called 'identifier'");
 		}
 		return this.identifier.hashCode();
+	}
+
+	@Override
+	public void reset() {
+		LOGGER = Logger.getLogger(Road.class.getName());
+		Road.idMap = new HashMap<String, Object>();
+		
 	}
 }

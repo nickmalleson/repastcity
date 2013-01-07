@@ -1,0 +1,6 @@
+export MPJ_HOME=../mpj-v0_38
+export PATH=$PATH:$MPJ_HOME/bin
+
+mpjrun.sh -np 4 -ea -Xss10M -Xmx500M -cp ..:../bin/:\
+$MPJ_HOME/lib/mpj.jar \
+uk.ac.leeds.mass.genetic_algorithm.GeneticMPJ

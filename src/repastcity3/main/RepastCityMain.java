@@ -40,6 +40,9 @@ public class RepastCityMain {
 
 		try {
 			
+			// Run a number of times for testing
+			for (int i=0; i<5; i++) {
+			
 			if (args.length!=1) {
 				throw new Exception("RepastCityMain expects the scenario to load as the first (and only) " +
 						"command-line argument. Got: "+Arrays.toString(args));
@@ -106,6 +109,8 @@ public class RepastCityMain {
 			System.out.println("*********************** FINISHING RUN *********************");
 			// If appropriate, summarise all agent's state variables and motive values
 			runner.cleanUpBatch();    // run after all runs complete
+			
+			} // for i
 
 		} catch (Exception e) {
 			LOGGER.log(Level.SEVERE, "RepastCityMain caught exception, exitting:", e);
@@ -118,6 +123,11 @@ public class RepastCityMain {
 	 * occurred and the sim must terminate.  */
 	public static void stopSim() {
 		RepastCityMain.stopSim = true;
+	}
+	
+	/** Return whether or not another class has asked the simulation to stop */
+	public static boolean isStopSim() {
+		return RepastCityMain.stopSim;
 	}
 }
 

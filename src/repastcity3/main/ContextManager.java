@@ -24,9 +24,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.DecimalFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -80,40 +79,23 @@ public class ContextManager implements ContextBuilder<Object> {
 	 * (at the bottom of this file).
 	 */
 	private static Logger LOGGER;
-
-	/**
-	 * The logDir can be set by other classes (e.g a GA or main class) to specify a directory other than the root model
-	 * directory for log files.
-	 */
-	public static String logDir = null;
-
-	/** A name for this model run which should be unique (based on the current system time). */
-	public static String modelName = null; 
+	
+	// Optionally force agent threading off (good for debugging)
+	private static final boolean TURN_OFF_THREADING = true;
 
 	static {
 		
-		// Give this run a unique name based on the current time and the current random seed. This has to be done
-		// here because the name of the model is required by the logger (initialised below).
-		if (modelName == null) { // If not null then something else has already set this model's name
-			Calendar calendar = new GregorianCalendar();
-			ContextManager.modelName = "model-"+calendar.get(Calendar.YEAR)+"_"+(calendar.get(Calendar.MONTH)+1)+"_"+
-				calendar.get(Calendar.DATE)+"-"+calendar.get(Calendar.HOUR_OF_DAY)+"_"+
-				calendar.get(Calendar.MINUTE)+"_"+calendar.get(Calendar.SECOND)+"-"+RandomHelper.getSeed(); 
+		// See if logging needs initialisation. This might already have been done by another Main class (e.g.
+		// when runnning the model from the commandline or on the grid
+		
+		if (!RepastCityLogging.isInitialised()) {
+			RepastCityLogging.initialise();
 		}
 		
-		// Also create a directory for results, logs etc to go in to.
-		File dir = new File(ContextManager.modelName);
-		dir.mkdirs();
-		ContextManager.logDir = ContextManager.modelName+"/"; // logDir will be read by the Logger class
 		
-		// This causes the static initialisation block of logging to to be executed, setting up loggers:
-		RepastCityLogging.dummy() ;  
-		
-		// Configure the logger for this class
+		// get a logger for this class.
 		LOGGER = Logger.getLogger(ContextManager.class.getName());
 		
-		LOGGER.log(Level.FINE, "The name for this model run is "+ContextManager.modelName);
-
 		// Read in the model properties.
 		try {
 			readProperties();
@@ -123,8 +105,7 @@ public class ContextManager implements ContextBuilder<Object> {
 
 	}
 
-	// Optionally force agent threading off (good for debugging)
-	private static final boolean TURN_OFF_THREADING = false;;
+
 
 	private static Properties properties;
 
@@ -134,6 +115,9 @@ public class ContextManager implements ContextBuilder<Object> {
 	/** An object to generate and organise the results of a simulation. The results.generateResults() function is
 	 * scheduled to be called at the end of the simulation. */
 	private static Results results = new Results(); 
+	
+	/** A collection of objects that need to be reset if the model is restarted */
+	private static List<Resetable> resetableList = new ArrayList<Resetable>(); 
 
 
 	/*
@@ -172,6 +156,10 @@ public class ContextManager implements ContextBuilder<Object> {
 
 		// Keep a useful static link to the main context
 		mainContext = con;
+		
+		// Reset this class and all the others that might need to be
+		// (see Resetable interface for a description).
+		ContextManager.resetModel();
 		
 		// This is the name of the 'root'context
 		mainContext.setId(GlobalVars.CONTEXT_NAMES.MAIN_CONTEXT);
@@ -217,6 +205,8 @@ public class ContextManager implements ContextBuilder<Object> {
 			GISFunctions.readShapefile(Community.class, communityFile, communityProjection, communityContext);
 			mainContext.addSubContext(communityContext);
 			SpatialIndexManager.createIndex(communityProjection, Community.class);
+			LOGGER.log(Level.FINER, "Read " + communityContext.getObjects(Community.class).size()
+					+ " communities from " + communityFile);
 
 			// Tell the buildings and communities about each other (not sure if it's quicker to search communities
 			// for buildings or the other way round
@@ -233,6 +223,9 @@ public class ContextManager implements ContextBuilder<Object> {
 				} // for buildings
 			} // for communities
 				// Check all buildings have a community
+//			LOGGER.info("XXXXNUMBER OF COMMUNITIES/BUILDINGS "+
+//					communityContext.getObjects(Community.class).size()+ " / "+
+//					buildingContext.getObjects(Building.class).size());
 			for (Building b : ContextManager.buildingContext.getObjects(Building.class)) {
 				if (b.getCommunity() == null) {
 					throw new EnvironmentError("The building " + b.toString() + " does not have a community.");
@@ -244,9 +237,6 @@ public class ContextManager implements ContextBuilder<Object> {
 			// throw new EnvironmentError("The community "+c.toString()+" does not have any buildings.");
 			// }
 			// }
-
-			LOGGER.log(Level.FINER, "Read " + communityContext.getObjects(Community.class).size()
-					+ " communities from " + communityFile);
 
 			// Create road network
 
@@ -443,7 +433,7 @@ public class ContextManager implements ContextBuilder<Object> {
 	}
 
 	private static long speedTimer = -1; // For recording time per N iterations
-	DecimalFormat memFormatter = new DecimalFormat("###,###"); // For printing memory nicely
+	DecimalFormat memFormatter = new DecimalFormat("###,###,###"); // For printing memory nicely
 	public void printTicks() {
 		LOGGER.info("Iterations: " + RunEnvironment.getInstance().getCurrentSchedule().getTickCount() + ". Speed: "
 				+ ((double) (System.currentTimeMillis() - ContextManager.speedTimer) / 1000.0) + "sec/ticks."
@@ -675,6 +665,9 @@ public class ContextManager implements ContextBuilder<Object> {
 		LOGGER.log(Level.SEVERE, "ContextManager has been told to stop by " + clazz.getName(), ex);
 	}
 
+	/**
+	 * Set the burglary weights that will be used by agents to determine their behaviour.
+	 */
 	public static void setBurglaryWeights(BurglaryWeights bw) {
 		ContextManager.burglaryWeights = bw;
 	}
@@ -772,6 +765,77 @@ public class ContextManager implements ContextBuilder<Object> {
 	 */
 	public static Geography<IAgent> getAgentGeography() {
 		return ContextManager.agentGeography;
+	}
+	
+	/** 
+	 * Allows other classes to tell the <code>ContextManager</code? that they are resetable.
+	 * Only one object of each class type will be added to the list so it is OK for
+	 * all Resetable objects to call this in their constructor.
+	 * 
+	 * @param r The object to add to the list.
+	 */
+	public static void addToResetableList(Resetable r) {
+		// Go through all objects in the list so far and make sure that none already exist
+		
+		for (Resetable res:ContextManager.resetableList) {
+			if (res.getClass().equals(r.getClass())){
+//				LOGGER.finest("Not adding object"+r.toString()+" because there is already " +
+//						"an object "+res.toString()+" in the list");
+				return;
+			}
+		}
+//		LOGGER.finest("Object "+r.toString()+" has been added to the resettable list.");
+		ContextManager.resetableList.add(r);
+	}
+
+	private static void resetModel() {
+		
+		// Reset all the other classes that are resetable
+		
+		for (Resetable r:ContextManager.resetableList) {
+			r.reset();
+		}
+		
+		// SpatialIndexManager is abstract so cannot add an instance of itself to the list
+		SpatialIndexManager.clearIndices();
+		
+		ContextManager.realTime = 8.0; // (start at 8am)
+		ContextManager.numberOfDays = 0; // It is also useful to count the number of days
+		
+		// Get a new logger for this class.
+		LOGGER = Logger.getLogger(ContextManager.class.getName());
+		
+		ContextManager.burglaryWeights = null;
+		
+		ContextManager.results = new Results();
+		
+		ContextManager.resetableList = new ArrayList<Resetable>();
+		
+		// Clear out the contexts of all their objects
+		
+		// Remove all subcontexts from the main one.
+		for (Context<?> c:mainContext.getSubContexts()) {
+			c.clear();
+			ContextManager.mainContext.removeSubContext(c);
+		}		
+		
+//		ContextManager.buildingContext.g
+		ContextManager.buildingContext = null;
+		ContextManager.buildingProjection = null;
+		ContextManager.communityContext = null;
+		ContextManager.communityProjection = null;
+		ContextManager.roadContext = null;
+		ContextManager.roadProjection = null;
+		ContextManager.junctionContext = null;
+		ContextManager.junctionGeography = null;
+		ContextManager.roadNetwork = null;
+		ContextManager.agentContext = null;
+		ContextManager.agentGeography = null;
+
+		ContextManager.error = false;
+
+		System.gc(); // Try to clear some memory
+		
 	}
 
 }

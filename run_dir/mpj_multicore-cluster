@@ -1,8 +1,8 @@
 export MPJ_HOME=../mpj-v0_38
 export PATH=$PATH:$MPJ_HOME/bin
-export REPASTHOME=/Applications/Repast-Simphony-2.0.0-beta/eclipse/plugins/
+export REPASTHOME=/home/ec2-user/ebs1/simburglar/Repast-Simphony-2.0.0-beta/eclipse/plugins/
 
-mpjrun.sh -np 4 -ea -Xss10M -Xmx1G -Xms400M -cp ..:../bin/:\
+mpjrun.sh -np 21 -Xms20G -Xmx50G -XX:MaxPermSize=1G -cp ..:../bin/:\
 $REPASTHOME/repast.simphony.runtime_2.0.0/bin/:\
 $REPASTHOME/repast.simphony.runtime_2.0.0/lib/ant-antlr.jar:\
 $REPASTHOME/repast.simphony.runtime_2.0.0/lib/ant-apache-bcel.jar:\

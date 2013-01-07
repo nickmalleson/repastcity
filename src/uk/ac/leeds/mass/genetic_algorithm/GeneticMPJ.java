@@ -3,6 +3,7 @@ package uk.ac.leeds.mass.genetic_algorithm;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+
 import mpi.MPI;
 import mpi.Request;
 import mpi.Status;
@@ -60,6 +61,8 @@ public class GeneticMPJ {
 	private static final int MODEL_FAILURE = 4;
 	/** Tell the master there was a problem but not model failure */
 	private static final int UNSPECIFIED_PROBLEM = 5;
+	
+	private long startTime = -1; // For measuring total run time.
 
 	/**
 	 * Initialises a new <code>GeneticMPJ</code> object and initialise MPI as
@@ -72,7 +75,7 @@ public class GeneticMPJ {
 	 * @param numKeep The number of chromosomes to keep after each iteration
 	 */
 	public GeneticMPJ(String args[], Class<? extends Chromosome> clazz, int maxIter, int numChromosomes, int numKeep) {
-
+				
 		// Configure and initialise MPI
 		MPI.Init(args);
 
@@ -89,7 +92,21 @@ public class GeneticMPJ {
 
 		this.numChromes = numChromosomes;
 		this.numKeep = numKeep;
-
+		
+		this.startTime = System.currentTimeMillis();
+		
+		// might need to add some jars manually
+//		if (this.rank == 0) {
+//			try {
+//				this.addClassPathVariables();
+//			}
+//			catch(Exception e) {
+//				System.err.println("ERROR WITH CLASSPATH, CANNOT CONTINUE: "+e.toString());
+//				e.printStackTrace();
+//
+//			}
+//		}	
+//		MPI.COMM_WORLD.Barrier(); // All wait until classes have been added 
 
 		// Start slave/master functions
 		if (this.rank == 0) { // This is the master
@@ -98,10 +115,73 @@ public class GeneticMPJ {
 		else { // This is a slave
 			this.slave();
 		}
-		log.log("Finished, closing logs and running MPI.Finalise()");
+		double runtime = ((double)System.currentTimeMillis()-startTime)/(1000.0*60.0); // Runtime in minutes
+		log.log("Finished in "+runtime+" mins, closing logs and running MPI.Finalise()");
 		log.closeLog();
 		MPI.Finalize();
 	}
+
+//	private void addClassPathVariables() throws Exception {
+//		// Manually add some stuff to the classpath
+//	
+//		//		String rh = "/Applications/Repast-Simphony-2.0.0-beta/eclipse/plugins/"; // repast home
+//		String rh = System.getenv("REPASTHOME");
+//		if (rh==null) {
+//			throw new Exception("No REPASTHOME environment variable set, this is needed to add repast " +
+//			"jars to the classpath.");
+//		}
+//		System.out.println("Using REPASTHOME directory: "+rh);
+//
+//		try {
+//			// Create a list of files to add to the classpath
+//			List<String> fileList = new ArrayList<String>();
+//			// Add some individual files/ class directories
+//			fileList.add("../bin"); // model classes
+//			fileList.add(rh+"repast.simphony.runtime_2.0.0/bin");
+//			fileList.add(rh+"repast.simphony.runtime_2.0.0/lib/saf.core.runtime.jar");
+//			fileList.add(rh+"repast.simphony.bin_and_src_2.0.0/repast.simphony.bin_and_src.jar");
+//			// Now add loads of other jars to the lists of files
+//			String[] searchDirs = new String[]{
+//					rh+"repast.simphony.runtime_2.0.0/lib/",
+//					rh+"repast.simphony.core_2.0.0/lib/",
+//					rh+"repast.simphony.gis_2.0.0/lib/"
+////					,"../mpj-v0_38/lib/" // Also ned MPJ libs for some reason
+//			};
+//			for (String dirname:searchDirs) {
+//				File dir = new File(dirname);
+//				for (File f:dir.listFiles()) {
+//					if (f.getName().endsWith(".jar")) {
+//						fileList.add(f.getAbsolutePath());
+//					}
+//				}
+//			}
+//			//		     System.out.println(fileList.toString());
+//
+//			// Add them to the classpath using reflection
+//			// e.g. http://stackoverflow.com/questions/1010919/adding-files-to-java-classpath-at-runtime
+////			URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+//			ClassLoader sysloader = ClassLoader.getSystemClassLoader();
+//			Class sysclass = URLClassLoader.class;
+//			Method method = sysclass.getDeclaredMethod("addURL", new Class[]{URL.class});
+//			method.setAccessible(true);
+//
+//			for (String f:fileList) {
+//				method.invoke(sysloader, new Object[]{new File(f).toURL()});
+//			}
+//
+//		} catch (Throwable t) {
+//			t.printStackTrace();
+//			throw new IOException("Error, could not add URL to system classloader");
+//		}//end try catch
+//
+//		System.out.println("***************** PRINT THE CLASSPATH ****************");
+//		//Get the URLs
+//		URL[] urls = ((URLClassLoader)ClassLoader.getSystemClassLoader()).getURLs();
+//		for(int i=0; i< urls.length; i++)
+//			System.out.println(urls[i].getFile());
+//		System.out.println("*************************** ***************************");
+//		
+//	}
 
 	/**
 	 * This function is called when this node is classified as a master. It creates
@@ -115,7 +195,9 @@ public class GeneticMPJ {
 			// Inititlise the GALog
 			this.log = new GALog(this.rank, GALog.findNewLogDir(this.rank));
 
-			log.log("Master is starting with " + this.nodes + " nodes in total.");
+			log.log("Master is starting with " + this.nodes + " nodes in total. This node has "+Runtime.getRuntime().availableProcessors()+" cpus");
+			
+			
 
 			// Initialise the Chromosomes
 			chromes = new Chromosome[numChromes];
@@ -177,6 +259,10 @@ public class GeneticMPJ {
 //						fitarray[i] = chromes[i].getFitness();
 //					}
 //					log.log(Arrays.toString(chromeNodeLink)+" - "+Arrays.toString(fitarray));
+					
+					// Wait a few seconds before starting the next job (in case names if models depend on system time)
+					Thread.sleep(5000);
+					
 
 					jobsSent++;
 				} // for first batch
@@ -221,8 +307,12 @@ public class GeneticMPJ {
 						chromes[chrome].setFitness(9999);
 					}
 					else {
-						log.log("Didn't understand the slave's response (" + message + "), ignoring it.");
+						throw new GAException("Didn't understand the slave's response (" + message + ").");
 					}
+					
+					// Write the chromosome to the full results file
+					outWriterFull.write(iter - 1 + "," + chromes[chrome].toCSVString() + "\n");
+					outWriterFull.flush();
 
 					jobsCompleted++;
 
@@ -264,15 +354,16 @@ public class GeneticMPJ {
 				 /* Create the new population for the next iteration. */
 				chromes = Chromosome.sort(chromes);	// Sort by fitness
 
-				// Write best chromosome info to file (in csv form)
+				// Write best chromosome info to file (in csv form). (All chromosomes are also written
+				// to the 'full' csv file as they're received
 				outWriter.write(iter - 1 + "," + chromes[0].toCSVString() + "\n");
 				outWriter.flush();
 
-				// Write *all* the chromosomes to the full results file
-				for (Chromosome c:chromes) {
-					outWriterFull.write(iter - 1 + "," + c.toCSVString() + "\n");
-				}
-				outWriter.flush();
+//				// Write *all* the chromosomes to the full results file
+//				for (Chromosome c:chromes) {
+//					outWriterFull.write(iter - 1 + "," + c.toCSVString() + "\n");
+//				}
+//				outWriterFull.flush();
 
 				log.log("Sorted Chromosomes. Best are:");
 				log.log(chromes[0].toString());
@@ -341,7 +432,7 @@ public class GeneticMPJ {
 
 		}
 		catch (Exception e) {
-			System.out.println("XXXX"+e.getMessage());
+			System.out.println("GENETICMPJ ERROR (might not be logged): "+e.getMessage());
 			e.printStackTrace();
 			log.log("Master caught an exception, can't continue. Message: '"
 					+ (e.getMessage() == null ? "null" : e.getMessage())
@@ -391,6 +482,8 @@ public class GeneticMPJ {
 				if (this.log == null) {
 					this.log = new GALog(this.rank, GALog.findNewLogDir(this.rank));
 				}
+				
+				log.log("Slave "+this.rank+ " is starting with "+Runtime.getRuntime().availableProcessors()+" cpus");
 
 				// Work out what the message from the master was
 				int message = -1;
@@ -404,6 +497,7 @@ public class GeneticMPJ {
 				else if (message == RUN_MODEL) {
 					log.log("Master sent RUN_MODEL");
 					// Along with the message, the master should have sent a chromosome
+//					log.log("XXX"+input[1].toString());
 					Chromosome chrome = (Chromosome) input[1];
 					log.log("Have received a chromosome: \n"+chrome.toString());
 
@@ -427,7 +521,7 @@ public class GeneticMPJ {
 				} // else
 			} // try
 			catch (GAException ex) {
-				log.log("Error running the chromosome: " + ex.getMessage());
+				log.log("Error running the chromosome: " + ex.toString());
 				log.log(ex.getStackTrace());
 				output[0] = MODEL_FAILURE;
 				MPI.COMM_WORLD.Send(output, 0, output.length, MPI.OBJECT, 0, tag);
@@ -439,7 +533,7 @@ public class GeneticMPJ {
 				MPI.COMM_WORLD.Send(output, 0, output.length, MPI.OBJECT, 0, tag);
 			}
 			catch (Exception e) {
-				log.log("Caught an exception. Message: '"
+				log.log("Caught an exception "+e.getClass().toString() +". Message: '"
 						+ (e.getMessage() == null ? "null" : e.getMessage())
 						+ "'." + " Cause: '"
 						+ (e.getCause() == null ? "null" : e.getCause().toString())

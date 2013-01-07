@@ -27,6 +27,7 @@ import repastcity3.exceptions.DuplicateIdentifierException;
 import repastcity3.exceptions.NoIdentifierException;
 import repastcity3.main.ContextManager;
 import repastcity3.main.Functions;
+import repastcity3.main.Resetable;
 
 import com.vividsolutions.jts.geom.Coordinate;
 
@@ -46,7 +47,7 @@ import com.vividsolutions.jts.geom.Coordinate;
  * @author Nick Malleson
  */
 
-public class Community implements FixedGeography, Identified {
+public class Community implements FixedGeography, Identified, Resetable {
 	
 	private static Logger LOGGER = Logger.getLogger(Community.class.getName());
 	
@@ -64,6 +65,9 @@ public class Community implements FixedGeography, Identified {
 	private double area=-1;
 	/** An estimate of the average distance to any point in this community. Calculated when it is first called. */
 	private double averageDist = -1;
+	
+	/** The expected number of burglaries in this community (for calibrating the model). */
+	private int expBurgd;
 
 	/**
 	 * The coordinates of the Community. This is also stored by the projection that contains this Community but it is
@@ -78,6 +82,7 @@ public class Community implements FixedGeography, Identified {
 
 	public Community() { 
 		this.variableValues = new Hashtable<Integer, Double>();
+		ContextManager.addToResetableList(this);
 	}
 	
 	private double collectiveEfficacy = 0.5;
@@ -203,6 +208,13 @@ public class Community implements FixedGeography, Identified {
 		return this.averageDist;	
 	}
 
+	public int getExpBurgd() {
+		return this.expBurgd;
+	}
+	
+	public void setExpBurgd(int expBurgd) {
+		this.expBurgd = expBurgd;
+	}
 
 
 	@Override
@@ -249,6 +261,12 @@ public class Community implements FixedGeography, Identified {
 		} catch (NoIdentifierException e) {
 			throw new RuntimeException(e.getMessage(), e);
 		}
+	}
+	
+	@Override
+	public void reset() {
+		LOGGER = Logger.getLogger(Community.class.getName());
+		Community.idMap = new HashMap<String, Object>();
 	}
 	
 	
@@ -342,6 +360,5 @@ public class Community implements FixedGeography, Identified {
 	public void setV39 (double v39 ) { if ( v39 >maxv39 ) maxv39 = v39 ; if ( v39 <minv39 ) minv39 = v39 ; this.setVariableValue( 39 , v39 );}
 	public void setV40 (double v40 ) { if ( v40 >maxv40 ) maxv40 = v40 ; if ( v40 <minv40 ) minv40 = v40 ; this.setVariableValue( 40 , v40 );}
 	public void setV41 (double v41 ) { if ( v41 >maxv41 ) maxv41 = v41 ; if ( v41 <minv41 ) minv41 = v41 ; this.setVariableValue( 41 , v41 );}
-	
 	
 }
