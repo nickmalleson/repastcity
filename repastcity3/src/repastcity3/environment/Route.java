@@ -35,7 +35,7 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.Vector;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.geotools.referencing.GeodeticCalculator;
 
 import cern.colt.Arrays;
